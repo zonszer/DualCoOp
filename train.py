@@ -26,6 +26,10 @@ def main():
     val_split = cfg.DATASET.VAL_SPLIT
     test_split = cfg.DATASET.TEST_SPLIT
     train_dataset = build_dataset(cfg, train_split)
+
+    cfg.DATASET.ROOT = 'datasets/VOCtest_06-Nov-2007/VOCdevkit/VOC2007'
+    cfg.freeze()
+
     val_dataset = build_dataset(cfg, val_split)
     test_dataset = build_dataset(cfg, test_split)
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=cfg.DATALOADER.TRAIN_X.BATCH_SIZE,

@@ -171,6 +171,6 @@ def setup_cfg(args):
     # 3. From input arguments
     reset_cfg(cfg, args)
 
-    cfg.freeze()
+    # cfg.freeze()
 
     return cfg

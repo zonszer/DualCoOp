@@ -57,9 +57,9 @@ obtained from Flickr tags as seen classes. We provide the class split on [Google
 Use the following code to learn a model for MLR with Partial Labels
 ```
 python train.py  --config_file configs/models/rn101_ep50.yaml \
---datadir <your_dataset_path> --dataset_config_file configs/datasets/<dataset>.yaml \
---input_size 448 --lr <lr_value>   --loss_w <loss_weight> \
--pp <porition_of_avail_label> --csc
+--datadir datasets/VOCtrainval_06-Nov-2007/VOCdevkit/VOC2007 --dataset_config_file configs/datasets/voc2007.yaml \
+--input_size 448 --lr 0.001   --loss_w 0.03 \
+-pp 0.5 --csc
 ```
 Some Args:  
 - `dataset_config_file`: currently the code supports `configs/datasets/coco.yaml` and `configs/datasets/voc2007.yaml`  

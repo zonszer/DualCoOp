@@ -6,3 +6,4 @@ Dassl.pytorch
 datasets
 RCCC/data
 
+*.tar
