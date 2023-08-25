@@ -62,8 +62,8 @@ def prepare_cv_datasets(dataname, batch_size):
         test_transform = transforms.Compose(
             [transforms.ToTensor(),
             transforms.Normalize((0.4914, 0.4822, 0.4465), (0.247, 0.243, 0.261))])
-        ordinary_train_dataset = dsets.CIFAR10(root='./data', train=True, transform=train_transform, download=True)
-        test_dataset = dsets.CIFAR10(root='./data', train=False, transform=test_transform)
+        ordinary_train_dataset = dsets.CIFAR10(root='/media/zjh/本地磁盘/projects7.12/stingy-teacher/data/data-cifar10', train=True, transform=train_transform, download=True)
+        test_dataset = dsets.CIFAR10(root='/media/zjh/本地磁盘/projects7.12/stingy-teacher/data/data-cifar10', train=False, transform=test_transform)
     
     train_loader = torch.utils.data.DataLoader(dataset=ordinary_train_dataset, batch_size=batch_size, shuffle=True, num_workers=0)
     test_loader = torch.utils.data.DataLoader(dataset=test_dataset, batch_size=batch_size, shuffle=False, num_workers=0)
