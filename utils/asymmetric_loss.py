@@ -22,14 +22,14 @@ class AsymmetricLoss(nn.Module):
         """
 
         # Calculating Probabilities
-        x_softmax = self.softmax(x)
+        x_softmax = self.softmax(x)     #x.shape==torch.Size([32, 2, 20])
         xs_pos = x_softmax[:, 1, :]
         xs_neg = x_softmax[:, 0, :]
         y = y.reshape(-1)
-        xs_pos = xs_pos.reshape(-1)
+        xs_pos = xs_pos.reshape(-1)     #shape=torch.Size([640]) (32*20)
         xs_neg = xs_neg.reshape(-1)
 
-        xs_pos = xs_pos[y!=-1]
+        xs_pos = xs_pos[y!=-1]  #324
         xs_neg = xs_neg[y!=-1]
         y = y[y!=-1]
 
@@ -51,13 +51,13 @@ class AsymmetricLoss(nn.Module):
             pt0 = xs_pos * y
             pt1 = xs_neg * (1 - y)  # pt = p if t > 0 else 1-p
             pt = pt0 + pt1
-            one_sided_gamma = self.gamma_pos * y + self.gamma_neg * (1 - y)
-            one_sided_w = torch.pow(1 - pt, one_sided_gamma)
+            one_sided_gamma = self.gamma_pos * y + self.gamma_neg * (1 - y)     #one_sided_gamma=torch.Size([324])
+            one_sided_w = torch.pow(1 - pt, one_sided_gamma)    #one_sided_w is used to weight the negative component of the loss.
             if self.disable_torch_grad_focal_loss:
                 torch.set_grad_enabled(True)
             loss *= one_sided_w
 
-        return -loss.sum()
+        return -loss.sum()      #loss.shape = torch.Size([324])
 
 
 

@@ -1,0 +1,70 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "train.py-mc_coco",
+            "type": "python",
+            "request": "launch",
+            "program": "train.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "env": {
+              "CUDA_VISIBLE_DEVICES": "0,1,2"
+            },
+            "args": [
+              "--config_file=configs/models/rn101_ep50.yaml",
+              "--datadir=/media/zjh/D2A088C7A088B40F/Datasets_zjh_8.25/Datasets/ms-coco",
+              "--dataset_config_file=configs/datasets/coco.yaml",
+              "--input_size=448",
+              "--lr=0.002",
+              "--loss_w=0.03",
+              "-pp=0.5",
+            ]
+        },
+
+        {
+            "name": "train.py-voc2007",
+            "type": "python",
+            "request": "launch",
+            "program": "train.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "env": {
+              "CUDA_VISIBLE_DEVICES": "0,"
+            },
+            "args": [
+              "--config_file=configs/models/rn101_ep50.yaml",
+              "--datadir=datasets/VOCtrainval_06-Nov-2007/VOCdevkit/VOC2007",
+              "--dataset_config_file=configs/datasets/voc2007.yaml",
+              "--input_size=448",
+              "--lr=0.001",
+              "--loss_w=0.03",
+              "-pp=0.5",
+            ]
+          },
+
+        {
+            "name": "main.py-RC",
+            "type": "python",
+            "request": "launch",
+            "program": "RCCC/main.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "env": {
+              "CUDA_VISIBLE_DEVICES": "0,"
+            },
+            "args": [
+              "-lo=rc",
+              "-mo=mlp",
+              "-ds=mnist",
+              "-lr=1e-3",
+              "-wd=1e-5"
+            ]
+          },
+          
+
+    ]
+}

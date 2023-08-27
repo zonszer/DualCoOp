@@ -41,7 +41,7 @@ def validate(data_loader, model, args):
             targets.append(target.cpu())
 
             # measure accuracy and record loss
-            pred = output.data.gt(args.thre).long()
+            pred = output.data.gt(args.thre).long()     #0.5
 
             tp += (pred + target).eq(2).sum(dim=0)
             fp += (pred - target).eq(1).sum(dim=0)
@@ -65,7 +65,7 @@ def validate(data_loader, model, args):
             # measure elapsed time
             batch_time.update(time.time() - end)
             end = time.time()
-
+            # prec and rec and f1 for each class:
             p_c = [float(tp[i].float() / (tp[i] + fp[i]).float()) * 100.0 if tp[
                                                                                  i] > 0 else 0.0
                    for i in range(len(tp))]
@@ -79,7 +79,7 @@ def validate(data_loader, model, args):
             mean_r_c = sum(r_c) / len(r_c)
             mean_f_c = sum(f_c) / len(f_c)
 
-            p_o = tp.sum().float() / (tp + fp).sum().float() * 100.0
+            p_o = tp.sum().float() / (tp + fp).sum().float() * 100.0    # precision value for the overall performance 
             r_o = tp.sum().float() / (tp + fn).sum().float() * 100.0
             f_o = 2 * p_o * r_o / (p_o + r_o)
 

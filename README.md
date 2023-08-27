@@ -59,19 +59,19 @@ Use the following code to learn a model for MLR with Partial Labels
 python train.py  --config_file configs/models/rn101_ep50.yaml \
 --datadir datasets/VOCtrainval_06-Nov-2007/VOCdevkit/VOC2007 --dataset_config_file configs/datasets/voc2007.yaml \
 --input_size 448 --lr 0.001   --loss_w 0.03 \
--pp 0.5 --csc
+-pp 0.5 
 ```
 Some Args:  
 - `dataset_config_file`: currently the code supports `configs/datasets/coco.yaml` and `configs/datasets/voc2007.yaml`  
 - `lr`: `0.001` for VOC2007 and `0.002` for MS-COCO.
 - `pp`: from 0 to 1. It specifies the portion of labels are available during the training.
 - `loss_w`: to balance the loss scale with different `pp`. We use larger `loss_w` for smaller `pp`.
-- `csc`: specify if you want to use class-specific prompts. We suggest to use class-agnostic prompts when `pp` is very small.   
+    - `csc`: specify if you want to use class-specific prompts. We suggest to use class-agnostic prompts when `pp` is very small.   
 Please refer to `opts.py` for the full argument list.
 For Example:
 ```
 python train.py  --config_file configs/models/rn101_ep50.yaml \
- --datadir  ../datasets/mscoco_2014/ --dataset_config_file configs/datasets/coco.yaml \
+ --datadir  /media/zjh/D2A088C7A088B40F/Datasets_zjh_8.25/Datasets/ms-coco --dataset_config_file configs/datasets/coco.yaml \
  --input_size 448  --lr 0.002   --loss_w 0.03  -pp 0.5
 ```
 

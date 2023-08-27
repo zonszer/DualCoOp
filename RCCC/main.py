@@ -27,7 +27,9 @@ np.random.seed(args.seed)
 device = torch.device("cuda:"+args.gpu if torch.cuda.is_available() else "cpu")
 
 full_train_loader, train_loader, test_loader, ordinary_train_dataset, test_dataset, K = prepare_cv_datasets(dataname=args.ds, batch_size=args.bs)
-partial_matrix_train_loader, train_data, train_givenY, dim = prepare_train_loaders_for_uniform_cv_candidate_labels(dataname=args.ds, full_train_loader=full_train_loader, batch_size=args.bs)
+partial_matrix_train_loader, train_data, train_givenY, dim = prepare_train_loaders_for_uniform_cv_candidate_labels(dataname=args.ds, 
+                                                                                                                   full_train_loader=full_train_loader, 
+                                                                                                                   batch_size=args.bs)
 
 if args.lo == 'rc':
     tempY = train_givenY.sum(dim=1).unsqueeze(1).repeat(1, train_givenY.shape[1])

@@ -112,7 +112,7 @@ def train_coop(data_loader, val_loaders, model, optim, sched, args, cfg, epoch, 
         else:
             device = torch.device("cpu")
         images = images.to(device)
-        target = target.to(device)
+        target = target.to(device)      #target is (batch_size, num_classes) which contains -1 0 1 vectors
         if cls_id is not None:
             if num_train_cls > args.num_train_cls:
                 batch_cls_id = torch.randperm(num_train_cls).cpu().tolist()[:args.num_train_cls]
@@ -123,15 +123,15 @@ def train_coop(data_loader, val_loaders, model, optim, sched, args, cfg, epoch, 
             batch_cls_id_input = None
 
         # compute output
-        with autocast():
+        with autocast():    # The autocast() context manager is used to automatically cast the input data to the appropriate data type for the model.  can be either torch.float16 or torch.float32 depending on the hardware and software configuration.
             output = model(images, batch_cls_id_input)
         # loss = args.loss_w * criterion(output, target)
         if cls_id is not None:
             # output = output[:, :, cls_id['train']]
             # target = target[:, cls_id['train']]
             target = target[:, batch_cls_id_input]
-        if output.dim() == 3:
-            loss = args.loss_w * criterion(output, target)
+        if output.dim() == 3:   
+            loss = args.loss_w * criterion(output, target)  #target.shape=torch.Size([32, 20])
         elif args.single_prompt == 'pos':
             loss = args.loss_w * criterion2(output, target)
         elif args.single_prompt == 'neg':

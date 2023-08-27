@@ -192,7 +192,7 @@ def tokenize(texts: Union[str, List[str]], context_length: int = 77, truncate: b
         An input string or a list of input strings to tokenize
 
     context_length : int
-        The context length to use; all CLIP models use 77 as the context length
+        The context length to use; all CLIP models use 77 as the context length         #??
 
     truncate: bool
         Whether to truncate the text in case its encoding is longer than the context length
@@ -204,10 +204,10 @@ def tokenize(texts: Union[str, List[str]], context_length: int = 77, truncate: b
     if isinstance(texts, str):
         texts = [texts]
 
-    sot_token = _tokenizer.encoder["<|startoftext|>"]
-    eot_token = _tokenizer.encoder["<|endoftext|>"]
-    all_tokens = [[sot_token] + _tokenizer.encode(text) + [eot_token] for text in texts]
-    result = torch.zeros(len(all_tokens), context_length, dtype=torch.long)
+    sot_token = _tokenizer.encoder["<|startoftext|>"]   #49406
+    eot_token = _tokenizer.encoder["<|endoftext|>"]     #49407 why is?
+    all_tokens = [[sot_token] + _tokenizer.encode(text) + [eot_token] for text in texts]    #len(all_tokens[0])==21(21=16+3+1+1)
+    result = torch.zeros(len(all_tokens), context_length, dtype=torch.long)     #shape=torch.Size([1, 77])
 
     for i, tokens in enumerate(all_tokens):
         if len(tokens) > context_length:
@@ -216,6 +216,6 @@ def tokenize(texts: Union[str, List[str]], context_length: int = 77, truncate: b
                 tokens[-1] = eot_token
             else:
                 raise RuntimeError(f"Input {texts[i]} is too long for context length {context_length}")
-        result[i, :len(tokens)] = torch.tensor(tokens)
+        result[i, :len(tokens)] = torch.tensor(tokens)  #对前面的token进行填充，长度为21，不够77的长度用0填充
 
     return result

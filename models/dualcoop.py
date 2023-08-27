@@ -38,15 +38,15 @@ class TextEncoder(nn.Module):
         self.dtype = clip_model.dtype
 
     def forward(self, prompts, tokenized_prompts):
-        x = prompts + self.positional_embedding.type(self.dtype)
+        x = prompts + self.positional_embedding.type(self.dtype)    #torch.Size([40, 77, 512]) + torch.Size([77, 512])
         x = x.permute(1, 0, 2)  # NLD -> LND
         x = self.transformer(x)
         x = x.permute(1, 0, 2)  # LND -> NLD
-        x = self.ln_final(x).type(self.dtype)
+        x = self.ln_final(x).type(self.dtype)   # normalize the output
 
         # x.shape = [batch_size, n_ctx, transformer.width]
         # take features from the eot embedding (eot_token is the highest number in each sequence)
-        x = x[torch.arange(x.shape[0]), tokenized_prompts.argmax(dim=-1)] @ self.text_projection
+        x = x[torch.arange(x.shape[0]), tokenized_prompts.argmax(dim=-1)] @ self.text_projection    #  @ torch.Size([512, 512])
 
         return x
 
@@ -60,7 +60,7 @@ class MLCPromptLearner(nn.Module):
         ctx_init_pos = cfg.TRAINER.COOP_MLC.POSITIVE_PROMPT_INIT.strip()
         ctx_init_neg = cfg.TRAINER.COOP_MLC.NEGATIVE_PROMPT_INIT.strip()
         dtype = clip_model.dtype
-        ctx_dim = clip_model.ln_final.weight.shape[0]
+        ctx_dim = clip_model.ln_final.weight.shape[0]   #512
 
         if ctx_init_pos and ctx_init_neg:
             # use given words to initialize context vectors
@@ -106,8 +106,8 @@ class MLCPromptLearner(nn.Module):
         print(f"Number of positive context words (tokens): {n_ctx_pos}")
         print(f"Number of negative context words (tokens): {n_ctx_neg}")
 
-        self.ctx_pos = nn.Parameter(ctx_vectors_pos)  # to be optimized
-        self.ctx_neg = nn.Parameter(ctx_vectors_neg)  # to be optimized
+        self.ctx_pos = nn.Parameter(ctx_vectors_pos)  # to be optimized     #torch.Size([20, 16, 512])  (tokens): 16  (all classes): 20
+        self.ctx_neg = nn.Parameter(ctx_vectors_neg)  # to be optimized     #torch.Size([20, 16, 512])
 
         classnames = [name.replace("_", " ") for name in classnames]
         name_lens = [len(_tokenizer.encode(name)) for name in classnames]
@@ -117,26 +117,26 @@ class MLCPromptLearner(nn.Module):
         tokenized_prompts_pos = []
         tokenized_prompts_neg = []
         for p_pos, p_neg in zip(prompts_pos, prompts_neg):
-            tokenized_prompts_pos.append(clip.tokenize(p_pos))
+            tokenized_prompts_pos.append(clip.tokenize(p_pos))  
             tokenized_prompts_neg.append(clip.tokenize(p_neg))
-        tokenized_prompts_pos = torch.cat(tokenized_prompts_pos)
+        tokenized_prompts_pos = torch.cat(tokenized_prompts_pos)    #tokenized_prompts_pos.shape is torch.Size([20, 77])
         tokenized_prompts_neg = torch.cat(tokenized_prompts_neg)
         with torch.no_grad():
-            embedding_pos = clip_model.token_embedding(tokenized_prompts_pos).type(dtype)
+            embedding_pos = clip_model.token_embedding(tokenized_prompts_pos).type(dtype)   #torch.Size([20, 77, 512])
             embedding_neg = clip_model.token_embedding(tokenized_prompts_neg).type(dtype)
 
         # These token vectors will be saved when in save_model(),
         # but they should be ignored in load_model() as we want to use
         # those computed using the current class names
         self.register_buffer("token_prefix_pos", embedding_pos[:, :1, :] )
-        self.register_buffer("token_suffix_pos", embedding_pos[:, 1 + n_ctx_pos:, :])
+        self.register_buffer("token_suffix_pos", embedding_pos[:, 1 + n_ctx_pos:, :])   #torch.Size([20, 60, 512])  (1 + n_ctx_pos=17) Q: why use 17? A:  The context length to use; all CLIP models use 77 as the context length 
         self.register_buffer("token_prefix_neg", embedding_neg[:, :1, :])
         self.register_buffer("token_suffix_neg", embedding_neg[:, 1 + n_ctx_neg:, :])
 
         self.n_cls = n_cls
         self.n_ctx_pos = n_ctx_pos
         self.n_ctx_neg = n_ctx_neg
-        tokenized_prompts = torch.cat([tokenized_prompts_neg, tokenized_prompts_pos], dim=0)  # torch.Tensor
+        tokenized_prompts = torch.cat([tokenized_prompts_neg, tokenized_prompts_pos], dim=0)  # torch.Tensor    #torch.Size([40, 77])
         self.register_buffer("tokenized_prompts", tokenized_prompts)
         self.name_lens = name_lens
 
@@ -220,27 +220,26 @@ class DualCoop(nn.Module):
 
     def forward(self, image, cls_id=None):
         # get image and text features
-        image_features, attn_weights = self.image_encoder(image.type(self.dtype))
-        prompts, tokenized_prompts = self.prompt_learner(cls_id)
+        image_features, attn_weights = self.image_encoder(image.type(self.dtype))   #features=torch.Size([32, 512, 197]) num_regions=197 change the data type of the image tensor to the data type specified by the dtype attribute of the class.
+        prompts, tokenized_prompts = self.prompt_learner(cls_id)    #prompts, tokenized_prompts = torch.Size([40, 77, 512]), torch.Size([40, 77])
         text_features = self.text_encoder(prompts, tokenized_prompts)
 
         # normalize features
-        text_features = text_features / text_features.norm(dim=-1, keepdim=True)
+        text_features = text_features / text_features.norm(dim=-1, keepdim=True)    #L2 norm -> shape=torch.Size([40, 512])
         image_features_norm = image_features / image_features.norm(dim=1, keepdim=True)
 
         # Class-Specific Region Feature Aggregation
-        output = 20 * F.conv1d(image_features_norm, text_features[:, :, None])
-        b, c, _ = output.shape
-        output_half = output[:,  c // 2:]
+        output = 20 * F.conv1d(image_features_norm, text_features[:, :, None])  
+        b, c, _ = output.shape                              #output.shape=torch.Size([32, 40, 197])
+        output_half = output[:,  c // 2:]                   #output_half=pos_prompt_emb
         w_half = F.softmax(output_half, dim=-1)
-        w = torch.cat([w_half, w_half], dim=1)
-        output = 5 * (output * w).sum(-1)
+        w = torch.cat([w_half, w_half], dim=1)      #torch.Size([32, 40, 197])
+        output = 5 * (output * w).sum(-1)           #Q: why 5 and 20 and why * ?
 
-        b, c = output.shape
+        b, c = output.shape     #torch.Size([32, 40])
 
         # convert the shape of logits to [b, 2, num_class]
-        logits = output.resize(b, 2, c//2)
-
+        logits = output.resize(b, 2, c//2)  #torch.Size([32, 2, 20])    #why can resize to 2 represent the features?
         return logits
 
     @property

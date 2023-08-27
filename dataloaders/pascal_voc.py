@@ -62,7 +62,7 @@ class voc2007(data.Dataset):
             raise ValueError('data split = %s is not supported in Nus Wide' % self.data_split)
 
         # create the label mask
-        self.mask = None
+        self.mask = None    #train: mask.shape=torch.Size([5011, 1, 20])  test: torch.Size([4952, 20])
         self.partial = partial
         if data_split == 'trainval' and partial < 1.:
             if label_mask is None:
@@ -72,7 +72,7 @@ class voc2007(data.Dataset):
                 torch.save(mask, os.path.join(self.root, 'Annotations', 'partial_label_%.2f.pt' % partial))
             else:
                 mask = torch.load(os.path.join(self.root, 'Annotations', label_mask))
-            self.mask = mask.long()
+            self.mask = mask.long() 
 
     def __len__(self):
         return len(self.image_list)
