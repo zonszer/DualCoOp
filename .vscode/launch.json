@@ -84,6 +84,38 @@
             ]
           },
           
+          {
+            "name": "train.py-PiCO",
+            "type": "python",
+            "request": "launch",
+            "program": "PiCO/train.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "env": {
+              "CUDA_VISIBLE_DEVICES": "0"
+            },
+            "args": [
+              "--exp-dir=PiCO/experiment/PiCO-CIFAR-10",
+              "--dataset=cifar10",
+              "--num-class=10",
+              "--dist-url=tcp://localhost:10001",
+              "--multiprocessing-distributed",
+              "--world-size=1",
+              "--rank=0",
+              "--seed=123",
+              "--arch=resnet18",
+              "--moco_queue=8192",
+              "--prot_start=1",
+              "--lr=0.01",
+              "--wd=1e-3",
+              "--cosine",
+              "--epochs=800",
+              "--loss_weight=0.5",
+              "--proto_m=0.99",
+              "--partial_rate=0.5"
+            ]
+          }
+          
 
     ]
 }

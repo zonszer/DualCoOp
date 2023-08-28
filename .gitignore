@@ -7,3 +7,11 @@ datasets
 RCCC/data
 
 *.tar
+
+#PiCO_contents:
+/data/*
+!/data/README.md
+/experiment/*
+!/experiment/README.md
+/__pycache__
+*.pyc
