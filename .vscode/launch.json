@@ -64,6 +64,25 @@
               "-wd=1e-5"
             ]
           },
+
+        {
+            "name": "main.py-CC",
+            "type": "python",
+            "request": "launch",
+            "program": "RCCC/main.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "env": {
+              "CUDA_VISIBLE_DEVICES": "0,"
+            },
+            "args": [
+              "-lo=cc",
+              "-mo=mlp",
+              "-ds=mnist",
+              "-lr=1e-3",
+              "-wd=1e-5"
+            ]
+          },
           
 
     ]

@@ -22,5 +22,5 @@ def confidence_update(model, confidence, batchX, batchY, batch_index):
         confidence[batch_index, :] = temp_un_conf * batchY # un_confidence stores the weight of each example
         #weight[batch_index] = 1.0/confidence[batch_index, :].sum(dim=1)
         base_value = confidence.sum(dim=1).unsqueeze(1).repeat(1, confidence.shape[1])
-        confidence = confidence/base_value
+        confidence = confidence/base_value  # use maticx for element-wise division
     return confidence

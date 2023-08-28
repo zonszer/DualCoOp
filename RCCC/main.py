@@ -32,7 +32,7 @@ partial_matrix_train_loader, train_data, train_givenY, dim = prepare_train_loade
                                                                                                                    batch_size=args.bs)
 
 if args.lo == 'rc':
-    tempY = train_givenY.sum(dim=1).unsqueeze(1).repeat(1, train_givenY.shape[1])
+    tempY = train_givenY.sum(dim=1).unsqueeze(1).repeat(1, train_givenY.shape[1])   #repeat train_givenY.shape[1] times in dim 1
     confidence = train_givenY.float()/tempY
     confidence = confidence.to(device)
     loss_fn = rc_loss
@@ -40,7 +40,7 @@ elif args.lo == 'cc':
     loss_fn = cc_loss
     
 if args.mo == 'mlp':
-    model = mlp_model(input_dim=dim, hidden_dim=500, output_dim=K)
+    model = mlp_model(input_dim=dim, hidden_dim=500, output_dim=K)  #dim=28*28=784
 elif args.mo == 'linear':
     model = linear_model(input_dim=dim, output_dim=K)
 elif args.mo == 'lenet':
@@ -54,9 +54,9 @@ model = model.to(device)
 
 optimizer = torch.optim.Adam(model.parameters(), lr = args.lr, weight_decay = args.wd)
 
-test_accuracy = accuracy_check(loader=test_loader, model=model, device=device)
+# test_accuracy = accuracy_check(loader=test_loader, model=model, device=device)
 
-print('Epoch: 0. Te Acc: {}'.format(test_accuracy))
+# print('Epoch: 0. Te Acc: {}'.format(test_accuracy))
 
 test_acc_list = []
 train_acc_list = []

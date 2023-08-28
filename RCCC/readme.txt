@@ -9,6 +9,9 @@ torchvision 0.2
 Demo:
 
 	python main.py -lo rc -mo mlp -ds mnist -lr 1e-3 -wd 1e-5
+	python RCCC/main.py -lo cc -mo mlp -ds mnist -lr 1e-3 -wd 1e-5
+	python RCCC/main.py -lo cc -mo mlp -ds mnist -lr 1e-3 -wd 1e-5
+
 	python main.py -lo rc -mo densenet -ds cifar10 -lr 1e-3 -wd 1e-3
 
 -ds: specifies the dataset

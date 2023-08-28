@@ -66,9 +66,9 @@ def prepare_cv_datasets(dataname, batch_size):
         ordinary_train_dataset = dsets.CIFAR10(root='/media/zjh/本地磁盘/projects7.12/stingy-teacher/data/data-cifar10', train=True, transform=train_transform, download=True)
         test_dataset = dsets.CIFAR10(root='/media/zjh/本地磁盘/projects7.12/stingy-teacher/data/data-cifar10', train=False, transform=test_transform)
     
-    train_loader = torch.utils.data.DataLoader(dataset=ordinary_train_dataset, batch_size=batch_size, shuffle=True, num_workers=8)
-    test_loader = torch.utils.data.DataLoader(dataset=test_dataset, batch_size=batch_size, shuffle=False, num_workers=8)
-    full_train_loader = torch.utils.data.DataLoader(dataset=ordinary_train_dataset, batch_size=len(ordinary_train_dataset.data), shuffle=True, num_workers=8)
+    train_loader = torch.utils.data.DataLoader(dataset=ordinary_train_dataset, batch_size=batch_size, shuffle=True, num_workers=15)
+    test_loader = torch.utils.data.DataLoader(dataset=test_dataset, batch_size=batch_size, shuffle=False, num_workers=15)
+    full_train_loader = torch.utils.data.DataLoader(dataset=ordinary_train_dataset, batch_size=len(ordinary_train_dataset.data), shuffle=True, num_workers=15)
     num_classes = 10
     return full_train_loader, train_loader, test_loader, ordinary_train_dataset, test_dataset, num_classes
 
@@ -77,6 +77,6 @@ def prepare_train_loaders_for_uniform_cv_candidate_labels(dataname, full_train_l
         K = torch.max(labels)+1 # K is number of classes, full_train_loader is full batch
     partialY = generate_uniform_cv_candidate_labels(data, labels)
     partial_matrix_dataset = gen_index_dataset(data, partialY.float(), partialY.float())
-    partial_matrix_train_loader = torch.utils.data.DataLoader(dataset=partial_matrix_dataset, batch_size=batch_size, shuffle=True, num_workers=8)
-    dim = int(data.reshape(-1).shape[0]/data.shape[0])
+    partial_matrix_train_loader = torch.utils.data.DataLoader(dataset=partial_matrix_dataset, batch_size=batch_size, shuffle=True, num_workers=15)
+    dim = int(data.reshape(-1).shape[0]/data.shape[0])  #dim=image_size*image_size=28*28
     return partial_matrix_train_loader, data, partialY, dim
