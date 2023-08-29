@@ -18,6 +18,7 @@ def extend_cfg(cfg):
     cfg.MLCCLIP.POSITIVE_PROMPT = ""
     cfg.MLCCLIP.NEGATIVE_PROMPT = ""
     cfg.MLCCLIP.FLOAT = False
+    cfg.MLCCLIP.LOSS_TYPE = ''
     cfg.TRAINER.COOP_MLC = CN()
     cfg.TRAINER.COOP_MLC.N_CTX_POS = 16
     cfg.TRAINER.COOP_MLC.N_CTX_NEG = 16
@@ -102,7 +103,7 @@ def reset_cfg(cfg, args):
         cfg.TRAINER.COOP_MLC.N_CTX_POS = args.n_ctx_pos
 
     if args.n_ctx_neg:
-        cfg.TRAINER.COOP_MLC.N_CTX_NEG = args.n_ctx_neg
+        cfg.TRAINER.COOP_MLC.N_CTX_NEG = args.n_ctx_neg     #default 16
 
     if args.logit_scale:
         cfg.TRAINER.COOP_MLC.LS = args.logit_scale
@@ -110,23 +111,20 @@ def reset_cfg(cfg, args):
     if args.gamma_neg:
         cfg.TRAINER.COOP_MLC.ASL_GAMMA_NEG = args.gamma_neg
 
-    if args.gamma_pos:
-        cfg.TRAINER.COOP_MLC.ASL_GAMMA_POS = args.gamma_pos
-
-    if args.train_batch_size:
-        cfg.DATALOADER.TRAIN_X.BATCH_SIZE = args.train_batch_size
-
-    if args.finetune:
-        cfg.TRAINER.FINETUNE = args.finetune
-
-    if args.finetune_backbone:
-        cfg.TRAINER.FINETUNE_BACKBONE = args.finetune_backbone
+    # if args.gamma_pos:
+    #     cfg.TRAINER.COOP_MLC.ASL_GAMMA_POS = args.gamma_pos
 
     if args.finetune_attn:
         cfg.TRAINER.FINETUNE_ATTN = args.finetune_attn
 
     if args.finetune_text:
         cfg.TRAINER.FINETUNE_TEXT = args.finetune_text
+
+    if args.finetune:
+        cfg.TRAINER.FINETUNE = args.finetune
+
+    if args.finetune_backbone:
+        cfg.TRAINER.FINETUNE_BACKBONE = args.finetune_backbone
 
     if args.base_lr_mult:
         cfg.OPTIM.BASE_LR_MULT = args.base_lr_mult
@@ -140,20 +138,27 @@ def reset_cfg(cfg, args):
     if args.attn_lr_mult:
         cfg.OPTIM.ATTN_LR_MULT = args.attn_lr_mult
 
+    if args.warmup_epochs is not None:
+        cfg.OPTIM.WARMUP_EPOCH = args.warmup_epochs
+
     if args.max_epochs:
-        cfg.OPTIM.MAX_EPOCH = args.max_epochs
+        cfg.OPTIM.MAX_EPOCH = args.max_epochs       #defaut 50
+
+    if args.train_batch_size:
+        cfg.DATALOADER.TRAIN_X.BATCH_SIZE = args.train_batch_size
 
     if args.portion:
         cfg.DATALOADER.TRAIN_X.PORTION = args.portion
-
-    if args.warmup_epochs is not None:
-        cfg.OPTIM.WARMUP_EPOCH = args.warmup_epochs
 
     if args.partial_portion:
         cfg.DATALOADER.TRAIN_X.PARTIAL_PORTION = args.partial_portion
 
     if args.mask_file:
         cfg.DATASET.MASK_FILE = args.mask_file
+
+    # start changing here:
+    if args.loss_type:
+        cfg.MLCCLIP.LOSS_TYPE = args.loss_type
 
 
 def setup_cfg(args):

@@ -8,7 +8,7 @@ import torch.utils.data.distributed
 from models import build_model
 from utils.validations import validate
 from opts import arg_parser
-from dataloaders import build_dataset
+from dataloaders import build_dataset, prepare_cv_datasets
 from utils.build_cfg import setup_cfg
 from dassl.optim import build_lr_scheduler
 from utils.trainers import train_coop
@@ -21,10 +21,14 @@ def main():
     args = parser.parse_args()
     cfg = setup_cfg(args)
 
+    (full_train_loader, train_loader, test_loader,
+      ordinary_train_dataset, test_dataset, K) = prepare_cv_datasets(dataname=cfg.DATASET.NAME, batch_size=cfg.DATALOADER.TRAIN_X.BATCH_SIZE)
+    
     # building the train and val dataloaders
     train_split = cfg.DATASET.TRAIN_SPLIT
     val_split = cfg.DATASET.VAL_SPLIT
     test_split = cfg.DATASET.TEST_SPLIT
+
     train_dataset = build_dataset(cfg, train_split, annFile=cfg.DATASET.ZS_TRAIN)
     if cfg.DATASET.NAME == 'voc2007':
         cfg.DATASET.ROOT = 'datasets/VOCtest_06-Nov-2007/VOCdevkit/VOC2007'

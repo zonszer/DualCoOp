@@ -29,7 +29,7 @@ def load_cifar10(partial_rate, batch_size):
         print('inconsistent permutation')
 
     print('Average candidate num: ', partialY.sum(1).mean())
-    partial_matrix_dataset = CIFAR10_Augmentention(data, partialY.float(), labels.float())
+    partial_matrix_dataset = CIFAR10_Augmentention(data, partialY.float(), labels.float())      #TODO
     # generate partial label dataset
 
     train_sampler = torch.utils.data.distributed.DistributedSampler(partial_matrix_dataset)     #TODO
@@ -40,7 +40,7 @@ def load_cifar10(partial_rate, batch_size):
         pin_memory=True,
         sampler=train_sampler,
         drop_last=True)
-    return partial_matrix_train_loader,partialY,train_sampler,test_loader
+    return partial_matrix_train_loader, partialY, train_sampler, test_loader
 
 
 class CIFAR10_Augmentention(Dataset):
