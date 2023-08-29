@@ -105,7 +105,7 @@ def train_coop(data_loader, val_loaders, model, optim, sched, args, cfg, epoch, 
     criterion3 = AsymmetricLoss3(cfg.TRAINER.COOP_MLC.ASL_GAMMA_NEG, cfg.TRAINER.COOP_MLC.ASL_GAMMA_POS)
 
     end = time.time()
-    for i,   (images, target) in enumerate(data_loader):
+    for i,   (images, target, idx) in enumerate(data_loader):
         target = target.max(dim=1)[0]
         if torch.cuda.is_available():
             device = torch.device("cuda")

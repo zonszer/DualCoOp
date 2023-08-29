@@ -8,11 +8,12 @@ import torch.utils.data.distributed
 from models import build_model
 from utils.validations import validate
 from opts import arg_parser
-from dataloaders import build_dataset, prepare_cv_datasets
+from dataloaders import build_dataset, build_PLL_dataloaders
 from utils.build_cfg import setup_cfg
 from dassl.optim import build_lr_scheduler
 from utils.trainers import train_coop
 from utils.helper import save_checkpoint
+from utils_temp.utils_ import *
 
 
 def main():
@@ -20,34 +21,13 @@ def main():
     parser = arg_parser()
     args = parser.parse_args()
     cfg = setup_cfg(args)
+    become_deterministic(cfg.SEED)
 
-    (full_train_loader, train_loader, test_loader,
-      ordinary_train_dataset, test_dataset, K) = prepare_cv_datasets(dataname=cfg.DATASET.NAME, batch_size=cfg.DATALOADER.TRAIN_X.BATCH_SIZE)
+    train_loader = build_PLL_dataloaders(cfg, 'train')
+    test_loader = build_PLL_dataloaders(cfg, 'test')
     
-    # building the train and val dataloaders
-    train_split = cfg.DATASET.TRAIN_SPLIT
-    val_split = cfg.DATASET.VAL_SPLIT
-    test_split = cfg.DATASET.TEST_SPLIT
-
-    train_dataset = build_dataset(cfg, train_split, annFile=cfg.DATASET.ZS_TRAIN)
-    if cfg.DATASET.NAME == 'voc2007':
-        cfg.DATASET.ROOT = 'datasets/VOCtest_06-Nov-2007/VOCdevkit/VOC2007'
-        cfg.freeze()
-    val_dataset = build_dataset(cfg, val_split, annFile=cfg.DATASET.ZS_TEST)
-    test_dataset = build_dataset(cfg, test_split, annFile=cfg.DATASET.ZS_TEST_UNSEEN)
-    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=cfg.DATALOADER.TRAIN_X.BATCH_SIZE,
-                                             shuffle=cfg.DATALOADER.TRAIN_X.SHUFFLE,
-                                             num_workers=cfg.DATALOADER.NUM_WORKERS, pin_memory=True)
-    val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=cfg.DATALOADER.VAL.BATCH_SIZE,
-                                             shuffle=cfg.DATALOADER.VAL.SHUFFLE,
-                                             num_workers=cfg.DATALOADER.NUM_WORKERS, pin_memory=True)
-    test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=cfg.DATALOADER.TEST.BATCH_SIZE,
-                                             shuffle=cfg.DATALOADER.TEST.SHUFFLE,
-                                             num_workers=cfg.DATALOADER.NUM_WORKERS, pin_memory=True)
-    classnames = val_dataset.classnames
-
     # build the model
-    model, arch_name = build_model(cfg, args, classnames)
+    model, arch_name = build_model(cfg, args, train_loader.dataset.classes)
     # build the optimizer and lr_scheduler
     # optim = build_optimizer(model.prompt_learner, cfg.OPTIM)
     try:
@@ -127,7 +107,7 @@ def main():
             sched.load_state_dict(checkpoint['scheduler'])
 
     for epoch in range(args.start_epoch, cfg.OPTIM.MAX_EPOCH):
-        batch_time, losses, mAP_batches = train_coop(train_loader, [val_loader],  model, optim, sched, args, cfg, epoch)
+        batch_time, losses, mAP_batches = train_coop(train_loader, [test_loader],  model, optim, sched, args, cfg, epoch)
         print('Train: [{0}/{1}]\t'
               'Time {batch_time.avg:.3f}\t'
               'Loss {losses.avg:.2f} \t'

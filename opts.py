@@ -10,6 +10,7 @@ def arg_parser():
     parser.add_argument('--pretrained', default=None, type=str, metavar='PATH',
                         help='path to pretrained checkpoint')
     parser.add_argument('--auto_resume', action='store_true', help='if the log folder includes a checkpoint, automatically resume')
+    parser.add_argument('--seed', type=int, default=1, help='runner seed')
 
     # data-related
     parser.add_argument('--datadir', type=str,  metavar='DIR', help='path to dataset file list')
@@ -47,6 +48,7 @@ def arg_parser():
 
     parser.add_argument('--lr', dest="lr", type=float, help='the learning rate')
     parser.add_argument('--loss_w', dest="loss_w", type=float, default=1., help='the loss weights')
+    parser.add_argument('--loss_type', type=str, default=None, help='the loss func type')
 
     parser.add_argument('--csc', dest='csc', action='store_true',
                         help='specify the csc')

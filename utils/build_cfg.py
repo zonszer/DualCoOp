@@ -160,6 +160,9 @@ def reset_cfg(cfg, args):
     if args.loss_type:
         cfg.MLCCLIP.LOSS_TYPE = args.loss_type
 
+    if args.seed:
+        cfg.SEED = args.seed
+
 
 def setup_cfg(args):
     cfg = get_cfg_default()

@@ -277,8 +277,6 @@ class ModifiedResNet_conv_proj(nn.Module):
         return x, attn_weights
 
 
-
-
 class LayerNorm(nn.LayerNorm):
     """Subclass torch's LayerNorm to handle fp16."""
 

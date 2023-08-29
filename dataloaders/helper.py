@@ -1,8 +1,10 @@
 from PIL import ImageDraw
 import numpy as np
 import random
+import torch
+from scipy.special import comb
 
-__all__ = ['CutoutPIL']
+__all__ = ['CutoutPIL, generate_uniform_cv_candidate_labels']
 
 
 class CutoutPIL(object):
@@ -25,3 +27,26 @@ class CutoutPIL(object):
         img_draw.rectangle([x1, y1, x2, y2], fill=fill_color)
 
         return x
+
+def generate_uniform_cv_candidate_labels(train_labels, partial_rate=0.1):
+    if torch.min(train_labels) > 1:
+        raise RuntimeError('testError')
+    elif torch.min(train_labels) == 1:
+        train_labels = train_labels - 1
+
+    K = int(torch.max(train_labels) - torch.min(train_labels) + 1)
+    n = train_labels.shape[0]
+
+    partialY = torch.zeros(n, K)
+    partialY[torch.arange(n), train_labels] = 1.0
+    transition_matrix =  np.eye(K)
+    transition_matrix[np.where(~np.eye(transition_matrix.shape[0],dtype=bool))] = partial_rate
+    print(transition_matrix)
+
+    random_n = np.random.uniform(0, 1, size=(n, K))
+
+    for j in range(n):  # for each instance
+        partialY[j, :] = torch.from_numpy((random_n[j, :] < transition_matrix[train_labels[j], :]) * 1)
+
+    print("Finish Generating Candidate Label Sets!\n")
+    return partialY
