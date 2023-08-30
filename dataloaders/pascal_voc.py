@@ -67,7 +67,7 @@ class voc2007(data.Dataset):
         if data_split == 'trainval' and partial < 1.:
             if label_mask is None:
                 rand_tensor = torch.rand(len(self.image_list), len(self.classnames))
-                mask = (rand_tensor < partial).long()
+                mask = (rand_tensor < partial).long()   #mask的1表示不被masked，0表示被masked（所以这里的partial表示的是部被masked的概率，higher means higher acc ）
                 mask = torch.stack([mask], dim=1)
                 torch.save(mask, os.path.join(self.root, 'Annotations', 'partial_label_%.2f.pt' % partial))
             else:
@@ -89,12 +89,12 @@ class voc2007(data.Dataset):
             if (obj.getElementsByTagName('difficult')[0].firstChild.data) == '1':
                 continue
             tag = obj.getElementsByTagName('name')[0].firstChild.data.lower()
-            label_vector[self.classnames.index(tag)] = 1.0
+            label_vector[self.classnames.index(tag)] = 1.0  #  tensor contains [0, 1]
         targets = label_vector.long()
-        target = targets[None, ]
+        target = targets[None, ]        #shape=[1, 20]
         if self.mask is not None:
-            masked = - torch.ones((1, len(self.classnames)), dtype=torch.long)
-            target = self.mask[index] * target + (1 - self.mask[index]) * masked
+            masked = - torch.ones((1, len(self.classnames)), dtype=torch.long)  #masked.shape=[1, 20], contains -1
+            target = self.mask[index] * target + (1 - self.mask[index]) * masked    #被masked的label被置为-1，不被masked的label保持原样（0或1）
 
         if self.transform is not None:
             img = self.transform(img)

@@ -123,13 +123,14 @@ def generate_uniform_cv_candidate_labels(train_labels, partial_rate=0.1):
     partialY = torch.zeros(n, K)
     partialY[torch.arange(n), train_labels] = 1.0
     transition_matrix =  np.eye(K)
-    transition_matrix[np.where(~np.eye(transition_matrix.shape[0],dtype=bool))] = partial_rate
+    transition_matrix[np.where(~np.eye(transition_matrix.shape[0], dtype=bool))] = partial_rate
     print(transition_matrix)
 
     random_n = np.random.uniform(0, 1, size=(n, K))
 
     for j in range(n):  # for each instance
-        partialY[j, :] = torch.from_numpy((random_n[j, :] < transition_matrix[train_labels[j], :]) * 1)
+        partialY[j, :] = torch.from_numpy((random_n[j, :] < transition_matrix[train_labels[j], :]) * 1)  #1表示不被masked，0表示被masked的
+        # partialY[j, :] = torch.from_numpy((random_n[j, :] < transition_matrix[train_labels[j], :]) * 1) * partialY[j, :]  #???
 
     print("Finish Generating Candidate Label Sets!\n")
     return partialY

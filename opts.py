@@ -66,7 +66,7 @@ def arg_parser():
                         help='the portion of training split used for training')
 
     parser.add_argument('-pp', '--partial_portion', dest="partial_portion", type=float, default=1+1e-6,
-                        help='the portion of partial labels used for training')
+                        help='the portion of partial labels used for training(partial label proportion)')
 
     parser.add_argument('--mask_file', dest="mask_file", type=str,
                         help='the mask label for partial labeling')

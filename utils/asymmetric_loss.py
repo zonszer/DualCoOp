@@ -22,20 +22,20 @@ class AsymmetricLoss(nn.Module):
         """
 
         # Calculating Probabilities
-        x_softmax = self.softmax(x)     #x.shape==torch.Size([32, 2, 20])
+        x_softmax = self.softmax(x)     #x.shape=torch.Size([32, 2, 20])
         xs_pos = x_softmax[:, 1, :]
         xs_neg = x_softmax[:, 0, :]
-        y = y.reshape(-1)
+        y = y.reshape(-1)               #in y, -1 represent what? A: -1 represent the masked(unknown) data
         xs_pos = xs_pos.reshape(-1)     #shape=torch.Size([640]) (32*20)
         xs_neg = xs_neg.reshape(-1)
 
-        xs_pos = xs_pos[y!=-1]  #324
+        xs_pos = xs_pos[y!=-1]  #324``
         xs_neg = xs_neg[y!=-1]
         y = y[y!=-1]
 
         # Asymmetric Clipping
         if self.clip is not None and self.clip > 0:
-            xs_neg = (xs_neg + self.clip).clamp(max=1)
+            xs_neg = (xs_neg + self.clip).clamp(max=1)      #self.clip = c = 0.05
 
         # Basic CE calculation
         los_pos = y * torch.log(xs_pos.clamp(min=self.eps))

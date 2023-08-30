@@ -90,20 +90,6 @@ class AttentionPool2d(nn.Module):
         return x[0]
 
 
-# class AttentionConv(nn.Module):
-#     def __init__(self, embed_dim: int,  output_dim: int = None):
-#         super().__init__()
-#         self.v_proj = nn.Conv2d(embed_dim, embed_dim, (1, 1))
-#         self.c_proj = nn.Conv2d(embed_dim, output_dim or embed_dim, (1, 1))
-#         self.positional_embedding = nn.Parameter(torch.randn(embed_dim, 7, 7) / embed_dim ** 0.5)
-#
-#     def forward(self, x):
-#         x = x + self.positional_embedding[None, :, :, :].to(x.dtype)
-#         v = self.v_proj(x)
-#         feat = self.c_proj(v)
-#         return feat
-
-
 class AttentionConv(nn.Module):
     def __init__(self, embed_dim: int, spec_dim: int,  output_dim: int = None):
         super().__init__()
@@ -116,13 +102,13 @@ class AttentionConv(nn.Module):
 
     def forward(self, x):
         _, _, h, w = x.shape
-        if h * w + 1 != self.positional_embedding.shape[0]:
+        if h * w + 1 != self.positional_embedding.shape[0]:     #difference1: Handling of Positional Embedding Resolution Mismatch
             w_spacial = self.positional_embedding[1:].permute(1, 0).reshape(1, -1, self.spec_dim, self.spec_dim)
             w_spacial = F.interpolate(w_spacial, size=(h, w), mode='bicubic')
             w_special = w_spacial.reshape(-1, h * w).permute(1, 0)
             positional_embedding = torch.cat([self.positional_embedding[:1], w_special], dim=0)
         else:
-            positional_embedding = self.positional_embedding
+            positional_embedding = self.positional_embedding    #positional_embedding
         x = x.reshape(x.shape[0], x.shape[1], x.shape[2] * x.shape[3]).permute(2, 0, 1)  # NCHW -> (HW)NC
         x = torch.cat([x.mean(dim=0, keepdim=True), x], dim=0)  # (HW+1)NC
         x = x + positional_embedding[:, None, :].to(x.dtype)  # (HW+1)NC
@@ -130,7 +116,7 @@ class AttentionConv(nn.Module):
             x1, attn_weights = F.multi_head_attention_forward(
                 query=x, key=x, value=x,
                 embed_dim_to_check=x.shape[-1],
-                num_heads=32,
+                num_heads=32,                       #difference2: Fixed Number of Heads 
                 q_proj_weight=self.q_proj.weight,
                 k_proj_weight=self.k_proj.weight,
                 v_proj_weight=self.v_proj.weight,
@@ -145,8 +131,9 @@ class AttentionConv(nn.Module):
                 use_separate_proj_weight=True,
                 training=self.training,
                 need_weights=True,
-                average_attn_weights=True
+                average_attn_weights=True       #difference2.1: Average Attention Weights
             )
+        # difference3: Extra Linear Projection 
         x2 = F.linear(x, self.v_proj.weight, self.v_proj.bias)
         x2 = F.linear(x2, self.c_proj.weight, self.c_proj.bias)
         # x2 dimension is [50, 32, 1024]
@@ -186,7 +173,7 @@ class ModifiedResNet(nn.Module):
         self.layer4 = self._make_layer(width * 8, layers[3], stride=2)
 
         self.embed_dim = width * 32  # the ResNet feature dimension
-        self.final_pool = torch.nn.AdaptiveAvgPool2d(7)
+        self.final_pool = torch.nn.AdaptiveAvgPool2d(7)             #difference0: bef atten use pool or not
         self.attnpool = AttentionPool2d(input_resolution // 32, self.embed_dim, heads, output_dim)
 
     def _make_layer(self, planes, blocks, stride=1):
@@ -273,7 +260,7 @@ class ModifiedResNet_conv_proj(nn.Module):
         x = self.layer2(x)
         x = self.layer3(x)
         x = self.layer4(x)
-        x, attn_weights = self.attnpool(x)
+        x, attn_weights = self.attnpool(x)  #before attnpool, x.shape == torch.Size([32, 2048, 1, 1])
         return x, attn_weights
 
 
@@ -670,7 +657,7 @@ def build_model(state_dict: dict):
         output_width = round((state_dict["visual.attnpool.positional_embedding"].shape[0] - 1) ** 0.5)
         vision_patch_size = None
         assert output_width ** 2 + 1 == state_dict["visual.attnpool.positional_embedding"].shape[0]
-        image_resolution = output_width * 32
+        image_resolution = output_width * 32    ## what is image_resolution and why use it? TODO
 
     embed_dim = state_dict["text_projection"].shape[1]
     context_length = state_dict["positional_embedding"].shape[0]
@@ -730,6 +717,7 @@ def build_model_conv_proj(state_dict: dict, cfg):
             del state_dict[key]
 
     convert_weights(model)
+    #------------------ difference: here TODO 
     old_state_dict = model.state_dict()
     for k, v in old_state_dict.items():
         if k in state_dict.keys():
@@ -742,19 +730,21 @@ def build_model_conv_proj(state_dict: dict, cfg):
                 # pass
                 old_state_dict[k] = state_dict[k]
             elif 'visual' in k and ('positional_embedding' in k):
-                w_spacial = state_dict[k][1:].permute(1, 0).reshape(1, -1, 7, 7)
-                new_size = int((old_state_dict[k].shape[0] - 1) ** 0.5)
-                w_spacial = F.interpolate(w_spacial, size=(new_size, new_size), mode='bicubic')
-                w_special = w_spacial.reshape(-1, new_size ** 2).permute(1, 0)
-                new_w = torch.cat([state_dict[k][:1], w_special], dim=0)
-                assert new_w.shape == old_state_dict[k].shape
+                w_spacial = state_dict[k][1:].permute(1, 0).reshape(1, -1, 7, 7)    #shape=torch.Size([49, 2048]) -> reshape: torch.Size([1, 2048, 7, 7])
+                new_size = int((old_state_dict[k].shape[0] - 1) ** 0.5)             #old_state_dict[k].shape=torch.Size([2, 2048])
+                w_spacial = F.interpolate(w_spacial, size=(new_size, new_size), mode='bicubic') #-> torch.Size([1, 2048, 1, 1])
+                w_special = w_spacial.reshape(-1, new_size ** 2).permute(1, 0)              #-> torch.Size([1, 2048])
+                new_w = torch.cat([state_dict[k][:1], w_special], dim=0)        #cat 回原来的dict param   
+                assert new_w.shape == old_state_dict[k].shape                   #保证shape相同
                 old_state_dict[k] = new_w
             else:
                 old_state_dict[k] = state_dict[k]
         else:
             print('Skip %s' % (k))
     state_dict = old_state_dict
+    #------------------
     model.load_state_dict(state_dict)
 
 
     return model.eval()
+

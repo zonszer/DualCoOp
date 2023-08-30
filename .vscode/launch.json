@@ -21,7 +21,7 @@
               "--input_size=32",
               "--lr=0.002",
               "--loss_w=0.03",  //X
-              "-pp=0.4",        
+              "-pp=0.4",        //partial label proportion
               "--csc",
               "--loss_type=cc",
             ]
