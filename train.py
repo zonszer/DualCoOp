@@ -67,7 +67,7 @@ def main():
     if not os.path.exists(log_folder):
         os.makedirs(log_folder)
 
-    logfile_path = os.path.join(log_folder, 'log.log')
+    logfile_path = os.path.join(log_folder, 'log_PLL.log')
     if os.path.exists(logfile_path):
         logfile = open(logfile_path, 'a')
     else:

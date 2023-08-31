@@ -5,7 +5,7 @@ import torch.nn as nn
 import time
 from utils.helper import AverageMeter, mAP
 from utils.validations import validate, validate_zsl
-from utils.asymmetric_loss import AsymmetricLoss, AsymmetricLoss2, AsymmetricLoss3
+from utils.asymmetric_loss import AsymmetricLoss, AsymmetricLoss2, AsymmetricLoss3, PLL_loss
 from torch.cuda.amp import autocast
 
 
@@ -100,9 +100,10 @@ def train_coop(data_loader, val_loaders, model, optim, sched, args, cfg, epoch, 
         if cfg.TRAINER.FINETUNE_BACKBONE:
             model.module.image_encoder.train()
 
-    criterion = AsymmetricLoss(cfg.TRAINER.COOP_MLC.ASL_GAMMA_NEG, cfg.TRAINER.COOP_MLC.ASL_GAMMA_POS)
-    criterion2 = AsymmetricLoss2(cfg.TRAINER.COOP_MLC.ASL_GAMMA_NEG, cfg.TRAINER.COOP_MLC.ASL_GAMMA_POS)
-    criterion3 = AsymmetricLoss3(cfg.TRAINER.COOP_MLC.ASL_GAMMA_NEG, cfg.TRAINER.COOP_MLC.ASL_GAMMA_POS)
+    criterion = PLL_loss(type=cfg.MLCCLIP.LOSS_TYPE)
+    # criterion = AsymmetricLoss(cfg.TRAINER.COOP_MLC.ASL_GAMMA_NEG, cfg.TRAINER.COOP_MLC.ASL_GAMMA_POS)
+    # criterion2 = AsymmetricLoss2(cfg.TRAINER.COOP_MLC.ASL_GAMMA_NEG, cfg.TRAINER.COOP_MLC.ASL_GAMMA_POS)
+    # criterion3 = AsymmetricLoss3(cfg.TRAINER.COOP_MLC.ASL_GAMMA_NEG, cfg.TRAINER.COOP_MLC.ASL_GAMMA_POS)
 
     end = time.time()
     for i,   (images, target, idx) in enumerate(data_loader):
@@ -130,8 +131,8 @@ def train_coop(data_loader, val_loaders, model, optim, sched, args, cfg, epoch, 
             # output = output[:, :, cls_id['train']]
             # target = target[:, cls_id['train']]
             target = target[:, batch_cls_id_input]
-        if output.dim() == 3:   
-            loss = args.loss_w * criterion(output, target)  #target.shape=torch.Size([32, 20])
+        if args.loss_type == 'cc':
+            loss = args.loss_w * criterion(output[:, 1, :], target)  #target.shape=torch.Size([32, 20])
         elif args.single_prompt == 'pos':
             loss = args.loss_w * criterion2(output, target)
         elif args.single_prompt == 'neg':

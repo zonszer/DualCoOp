@@ -8,7 +8,7 @@ import torch.nn.functional as F
 
 _tokenizer = _Tokenizer()
 
-__all__ = ['dualcoop', 'DualCoop']
+__all__ = ['dualcoop_PLL']
 
 
 def load_clip_to_cpu(cfg):
@@ -23,7 +23,7 @@ def load_clip_to_cpu(cfg):
 
     except RuntimeError:
         state_dict = torch.load(model_path, map_location="cpu")
-    model = clip.build_model(state_dict or model.state_dict(), cfg)
+    model = clip.build_model(state_dict or model.state_dict()) 
 
     return model
 
@@ -214,29 +214,30 @@ class DualCoop(nn.Module):
         self.tokenized_prompts = self.prompt_learner.tokenized_prompts
         self.image_encoder = clip_model.visual
         self.text_encoder = TextEncoder(clip_model)
-        self.logit_scale = cfg.TRAINER.COOP_MLC.LS
+        self.logit_scale = cfg.TRAINER.COOP_MLC.LS          #not use??
         self.dtype = clip_model.dtype
         self.cfg = cfg
 
     def forward(self, image, cls_id=None):
-        # get image and text features
-        image_features, attn_weights = self.image_encoder(image.type(self.dtype))   #features=torch.Size([32, 512, 197]) num_regions=197 change the data type of the image tensor to the data type specified by the dtype attribute of the class.
-        prompts, tokenized_prompts = self.prompt_learner(cls_id)    #prompts, tokenized_prompts = torch.Size([40, 77, 512]), torch.Size([40, 77])
+        image_features = self.image_encoder(image.type(self.dtype))
+
+        prompts, tokenized_prompts = self.prompt_learner(cls_id)
         text_features = self.text_encoder(prompts, tokenized_prompts)
 
-        # normalize features
-        text_features = text_features / text_features.norm(dim=-1, keepdim=True)    #L2 norm -> shape=torch.Size([40, 512])
-        image_features_norm = image_features / image_features.norm(dim=1, keepdim=True)
+        image_features = image_features / image_features.norm(dim=-1, keepdim=True)     #-> shape=[40,512]
+        text_features = text_features / text_features.norm(dim=-1, keepdim=True)        #-> shape=[32,512]
 
-        # Class-Specific Region Feature Aggregation
-        output = 20 * F.conv1d(image_features_norm, text_features[:, :, None])  
-        b, c, _ = output.shape                              #output.shape=torch.Size([32, 40, 197])
-        output_half = output[:,  c // 2:]                   #output_half=pos_prompt_emb
-        w_half = F.softmax(output_half, dim=-1)
-        w = torch.cat([w_half, w_half], dim=1)      #torch.Size([32, 40, 197])
-        output = 5 * (output * w).sum(-1)           #Q: why 5 and 20 and why * ?
+        # logit_scale = self.logit_scale.exp()
+        # logits = logit_scale * image_features @ text_features.t()
+        output = image_features @ text_features.t()     #shape should be [40, 32].
+        
+        b, c = output.shape                              #output.shape=torch.Size([32, 40, 197])
+        # output_half = output[:,  c // 2:]                   #output_half=pos_prompt_emb
+        # w_half = F.softmax(output_half, dim=-1)
+        # w = torch.cat([output_half, output_half], dim=1)      #torch.Size([32, 40])
+        # output = 5 * (output * w)           #
 
-        b, c = output.shape     #torch.Size([32, 40])
+        # b, c = output.shape     #torch.Size([32, 40])
 
         # convert the shape of logits to [b, 2, num_class]
         logits = output.resize(b, 2, c//2)  #torch.Size([32, 2, 20])    #why can resize to 2 represent the features?
@@ -271,7 +272,7 @@ class DualCoop(nn.Module):
         return params
 
 
-def dualcoop(cfg, classnames, **kwargs):
+def dualcoop_PLL(cfg, classnames, **kwargs):
     print(f"Loading CLIP (backbone: {cfg.MODEL.BACKBONE.NAME})")
     clip_model = load_clip_to_cpu(cfg)
 

@@ -1,6 +1,76 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
+class PLL_loss(nn.Module):
+    def __init__(self, type=None, gamma_neg=4, gamma_pos=1, clip=0.05, eps=1e-6, disable_torch_grad_focal_loss=True):
+        super(PLL_loss, self).__init__()
+
+        self.gamma_neg = gamma_neg
+        self.gamma_pos = gamma_pos
+        self.clip = clip
+        self.disable_torch_grad_focal_loss = disable_torch_grad_focal_loss
+        self.eps = eps
+        self.type = type
+        self.softmax = nn.Softmax(dim=1)
+
+    def forward(self, x, y):
+        """"
+        Parameters
+        ----------
+        x: input logits
+        y: targets (multi-label binarized vector)
+        """
+        if self.type == 'cc':
+            loss = self.forward_cc(x, y)
+        else:
+            raise ValueError
+        return loss
+
+    def forward_cc(self, x, y):
+        sm_outputs = F.softmax(x, dim=1)      #outputs are logits
+        final_outputs = sm_outputs * y
+        average_loss = - torch.log(final_outputs.sum(dim=1)).mean()     
+        return average_loss
+    
+    def forward_old(self, x, y):
+        # Calculating Probabilities
+        x_softmax = self.softmax(x)     #x.shape=torch.Size([32, 2, 20])
+        xs_pos = x_softmax[:, 1, :]
+        xs_neg = x_softmax[:, 0, :]
+        # y = y.reshape(-1)               #in y, -1 represent what? A: -1 represent the masked(unknown) data
+        # xs_pos = xs_pos.reshape(-1)     #shape=torch.Size([640]) (32*20)
+        # xs_neg = xs_neg.reshape(-1)
+
+        # xs_pos = xs_pos[y!=-1]  #324``
+        # xs_neg = xs_neg[y!=-1]
+        # y = y[y!=-1]
+
+        # Asymmetric Clipping
+        if self.clip is not None and self.clip > 0:
+            xs_neg = (xs_neg + self.clip).clamp(max=1)      #self.clip = c = 0.05
+
+        # Basic CE calculation
+        los_pos = y * torch.log(xs_pos.clamp(min=self.eps))
+        los_neg = (1 - y) * torch.log(xs_neg.clamp(min=self.eps))
+        loss = los_pos + los_neg
+        # import pdb
+        # pdb.set_trace()
+
+        # Asymmetric Focusing
+        if self.gamma_neg > 0 or self.gamma_pos > 0:
+            if self.disable_torch_grad_focal_loss:
+                torch.set_grad_enabled(False)
+            pt0 = xs_pos * y
+            pt1 = xs_neg * (1 - y)  # pt = p if t > 0 else 1-p
+            pt = pt0 + pt1
+            one_sided_gamma = self.gamma_pos * y + self.gamma_neg * (1 - y)     #one_sided_gamma=torch.Size([324])
+            one_sided_w = torch.pow(1 - pt, one_sided_gamma)    #one_sided_w is used to weight the negative component of the loss.
+            if self.disable_torch_grad_focal_loss:
+                torch.set_grad_enabled(True)
+            loss *= one_sided_w
+
+        return -loss.sum()      #loss.shape = torch.Size([324])
 
 class AsymmetricLoss(nn.Module):
     def __init__(self, gamma_neg=4, gamma_pos=1, clip=0.05, eps=1e-6, disable_torch_grad_focal_loss=True):
