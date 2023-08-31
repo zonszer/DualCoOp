@@ -106,7 +106,7 @@ def train_coop(data_loader, val_loaders, model, optim, sched, args, cfg, epoch, 
 
     end = time.time()
     for i,   (images, target) in enumerate(data_loader):
-        target = target.max(dim=1)[0]
+        target = target.max(dim=1)[0]       #target.shape=torch.Size([32, 1, 20])
         if torch.cuda.is_available():
             device = torch.device("cuda")
         else:
