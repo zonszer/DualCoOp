@@ -107,7 +107,6 @@ def train_coop(data_loader, val_loaders, model, optim, sched, args, cfg, epoch, 
 
     end = time.time()
     for i,   (images, target, idx) in enumerate(data_loader):
-        target = target.max(dim=1)[0]
         if torch.cuda.is_available():
             device = torch.device("cuda")
         else:
@@ -157,17 +156,17 @@ def train_coop(data_loader, val_loaders, model, optim, sched, args, cfg, epoch, 
         if i % args.print_freq == 0:
             print('Train: [{0}/{1}]\t'
                   'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
-                  'Loss {losses.val:.2f} ({losses.avg:.2f})\t'
+                  'Loss {losses.val:.5f} ({losses.avg:.5f})\t'
                   'mAP {mAP_batches.val:.2f} ({mAP_batches.avg:.2f})'.format(
                 i, len(data_loader), batch_time=batch_time,
                 losses=losses, mAP_batches=mAP_batches), flush=True)
 
         if args.val_freq_in_epoch != -1 and (i + 1) % args.val_freq_in_epoch == 0:
             if len(val_loaders) == 1:
-                p_c, r_c, f_c, p_o, r_o, f_o, mAP_score = validate(val_loaders[0], model, args)
+                acc1, acc5 = validate(val_loaders[0], model, args)
                 print('Test: [{}/{}]\t '
-                      ' P_C {:.2f} \t R_C {:.2f} \t F_C {:.2f} \t P_O {:.2f} \t R_O {:.2f} \t F_O {:.2f} \t mAP {:.2f}'
-                      .format(epoch + 1, cfg.OPTIM.MAX_EPOCH, p_c, r_c, f_c, p_o, r_o, f_o, mAP_score), flush=True)
+                      '  acc1 {:.2f} \t acc5 {:.2f}'
+                      .format(epoch + 1, cfg.OPTIM.MAX_EPOCH, acc1, acc5), flush=True)
             elif len(val_loaders) == 2:
                 p_unseen, r_unseen, f1_unseen, mAP_unseen = validate_zsl(val_loaders[0], model, args,
                                                                          cls_id['val_unseen'])

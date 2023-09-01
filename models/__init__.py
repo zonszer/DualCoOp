@@ -5,4 +5,5 @@ from models.model_builder import build_model
 __all__ = [
     'build_model',
     'dualcoop',
+    'dualcoop_PLL',
 ]

@@ -123,18 +123,18 @@ def main():
             losses=losses, mAP_batches=mAP_batches), file=logfile, flush=True)
 
         if (epoch + 1) % args.val_every_n_epochs == 0 or epoch == args.stop_epochs - 1:
-            p_c, r_c, f_c, p_o, r_o, f_o, mAP_score = validate(val_loader, model, args)
+            acc1, acc5 = validate(test_loader, model, args)
             print('Test: [{}/{}]\t '
-                  ' P_C {:.2f} \t R_C {:.2f} \t F_C {:.2f} \t P_O {:.2f} \t R_O {:.2f} \t F_O {:.2f} \t mAP {:.2f}'
-                  .format(epoch + 1, cfg.OPTIM.MAX_EPOCH, p_c, r_c, f_c, p_o, r_o, f_o, mAP_score), flush=True)
+                    '  acc1 {:.2f} \t acc5 {:.2f}'
+                    .format(epoch + 1, cfg.OPTIM.MAX_EPOCH, acc1, acc5), flush=True)
             print('Test: [{}/{}]\t '
-                  ' P_C {:.2f} \t R_C {:.2f} \t F_C {:.2f} \t P_O {:.2f} \t R_O {:.2f} \t F_O {:.2f} \t mAP {:.2f}'
-                  .format(epoch + 1, cfg.OPTIM.MAX_EPOCH, p_c, r_c, f_c, p_o, r_o, f_o, mAP_score),
-                  file=logfile, flush=True)
+                    '  acc1 {:.2f} \t acc5 {:.2f}'
+                    .format(epoch + 1, cfg.OPTIM.MAX_EPOCH, acc1, acc5), 
+                    file=logfile, flush=True)
 
-            is_best = mAP_score > best_mAP
+            is_best = acc1 > best_mAP
             if is_best:
-                best_mAP = mAP_score
+                best_mAP = acc1
             save_dict = {'epoch': epoch + 1,
                          'arch': arch_name,
                          'state_dict': model.state_dict(),
@@ -156,13 +156,13 @@ def main():
     checkpoint = torch.load(best_checkpoints, map_location='cpu')
     model.load_state_dict(checkpoint['state_dict'])
     best_epoch = checkpoint['epoch']
-    p_c, r_c, f_c, p_o, r_o, f_o, mAP_score = validate(test_loader, model, args)
+    p_c, r_c, f_c, p_o, r_o, f_o, acc1 = validate(test_loader, model, args)
     print('Test: [{}/{}]\t '
           ' P_C {:.2f} \t R_C {:.2f} \t F_C {:.2f} \t P_O {:.2f} \t R_O {:.2f} \t F_O {:.2f} \t mAP {:.2f}'
-          .format(best_epoch, cfg.OPTIM.MAX_EPOCH, p_c, r_c, f_c, p_o, r_o, f_o, mAP_score))
+          .format(best_epoch, cfg.OPTIM.MAX_EPOCH, p_c, r_c, f_c, p_o, r_o, f_o, acc1))
     print('Test: [{}/{}]\t '
           ' P_C {:.2f} \t R_C {:.2f} \t F_C {:.2f} \t P_O {:.2f} \t R_O {:.2f} \t F_O {:.2f} \t mAP {:.2f}'
-          .format(best_epoch, cfg.OPTIM.MAX_EPOCH, p_c, r_c, f_c, p_o, r_o, f_o, mAP_score),
+          .format(best_epoch, cfg.OPTIM.MAX_EPOCH, p_c, r_c, f_c, p_o, r_o, f_o, acc1),
           file=logfile, flush=True)
 
 

@@ -20,8 +20,8 @@
               "--dataset_config_file=configs/datasets/CIFAR10.yaml",
               "--input_size=32",
               "--lr=0.002",
-              "--loss_w=0.03",  //X
-              "-pp=0.4",        //partial label proportion
+              "--loss_w=1",  //X
+              "-pp=0.00000001",        //partial label proportion
               "--csc",
               "--loss_type=cc",
             ]

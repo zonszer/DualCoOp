@@ -6,6 +6,7 @@ Dassl.pytorch
 datasets
 RCCC/data
 
+*.pt
 *.tar
 
 #PiCO_contents:

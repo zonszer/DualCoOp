@@ -5,7 +5,53 @@ import time
 from utils.helper import AverageMeter, mAP, calc_F1
 from torch.cuda.amp import autocast
 
+def accuracy(output, target, topk=(1,)):
+    """Computes the accuracy over the k top predictions for the specified values of k"""
+    with torch.no_grad():
+        maxk = max(topk)
+        batch_size = target.size(0)
+
+        _, pred = output.float().topk(maxk, 1, True, True)
+        pred = pred.t()
+        correct = pred.eq(target.view(1, -1).expand_as(pred))
+
+        res = []
+        for k in topk:
+            correct_k = correct[:k].reshape((-1, )).float().sum(0, keepdim=True)
+            res.append(correct_k.mul_(100.0 / batch_size))
+        return res
+
 def validate(data_loader, model, args):
+    with torch.no_grad():
+        print('==> Evaluation...')       
+        model.eval()    
+        top1_acc = AverageMeter("Top1")
+        top5_acc = AverageMeter("Top5")
+
+        end = time.time()
+        for i,   (images, target, idx) in enumerate(data_loader):
+            if torch.cuda.is_available():
+                device = torch.device("cuda")
+            else:
+                device = torch.device("cpu")
+            images = images.to(device)
+
+            # compute output
+            with autocast():
+                output = model(images)
+            if output.dim() == 3:
+                output = output.cpu()[:, 1]
+            acc1, acc5 = accuracy(output, target, topk=(1, 5))
+            top1_acc.update(acc1[0])
+            top5_acc.update(acc5[0])
+
+        # print('Accuracy is %.2f%% (%.2f%%)'%(top1_acc.avg, top5_acc.avg))
+        # print('Accuracy is %.2f%% (%.2f%%)'%(top1_acc.avg, top5_acc.avg))
+    # torch.cuda.empty_cache()
+    return top1_acc.avg, top5_acc.avg
+
+
+def validate_old(data_loader, model, args):
     batch_time = AverageMeter()
     prec = AverageMeter()
     rec = AverageMeter()
@@ -20,8 +66,7 @@ def validate(data_loader, model, args):
     targets = []
     with torch.no_grad():
         end = time.time()
-        for i,   (images, target) in enumerate(data_loader):
-            target = target.max(dim=1)[0]
+        for i,   (images, target, idx) in enumerate(data_loader):
             if torch.cuda.is_available():
                 device = torch.device("cuda")
             else:

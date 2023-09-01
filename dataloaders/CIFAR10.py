@@ -3,6 +3,7 @@ import torchvision.transforms as transforms
 import torch
 from .helper import generate_uniform_cv_candidate_labels
 from PIL import Image
+import torch.nn.functional as F
 
 class CIFAR10(dsets.CIFAR10):
     def __init__(self, root, data_split, transform_mean, transform_std, img_size=32, pp=1, annFile="", label_mask=None, partial=1+1e-6):
@@ -30,6 +31,9 @@ class CIFAR10(dsets.CIFAR10):
 
         if self.data_split == 'train':
             self.reinit_labels(partial_portion=pp)     
+        # else:
+        #     self.targets = F.one_hot(torch.tensor(self.targets), num_classes=len(self.classes)).float()
+
 
 
     def build_dataloader(self, batch_size, shuffle, num_workers=15):

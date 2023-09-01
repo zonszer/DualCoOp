@@ -224,12 +224,12 @@ class DualCoop(nn.Module):
         prompts, tokenized_prompts = self.prompt_learner(cls_id)
         text_features = self.text_encoder(prompts, tokenized_prompts)
 
-        image_features = image_features / image_features.norm(dim=-1, keepdim=True)     #-> shape=[40,512]
-        text_features = text_features / text_features.norm(dim=-1, keepdim=True)        #-> shape=[32,512]
+        image_features = image_features / image_features.norm(dim=-1, keepdim=True)     #-> shape=[32,512]
+        text_features = text_features / text_features.norm(dim=-1, keepdim=True)        #-> shape=[40,512]
 
-        # logit_scale = self.logit_scale.exp()
+        # logit_scale = self.logit_scale
         # logits = logit_scale * image_features @ text_features.t()
-        output = image_features @ text_features.t()     #shape should be [40, 32].
+        output = image_features @ text_features.t()     #shape should be [32, 40].
         
         b, c = output.shape                              #output.shape=torch.Size([32, 40, 197])
         # output_half = output[:,  c // 2:]                   #output_half=pos_prompt_emb
@@ -240,7 +240,7 @@ class DualCoop(nn.Module):
         # b, c = output.shape     #torch.Size([32, 40])
 
         # convert the shape of logits to [b, 2, num_class]
-        logits = output.resize(b, 2, c//2)  #torch.Size([32, 2, 20])    #why can resize to 2 represent the features?
+        logits = output.reshape(b, 2, c//2)  #torch.Size([32, 2, 20])    #why can resize to 2 represent the features?
         return logits
 
     @property

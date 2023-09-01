@@ -6,7 +6,9 @@ import shutil
 
 class AverageMeter(object):
     """Computes and stores the average and current value"""
-    def __init__(self):
+    def __init__(self, name=None, fmt=':f'):
+        self.name = name
+        self.fmt = fmt
         self.reset()
 
     def reset(self):
@@ -20,6 +22,10 @@ class AverageMeter(object):
         self.sum += val * n
         self.count += n
         self.avg = self.sum / self.count
+
+    def __str__(self):
+        fmtstr = '{name} {val' + self.fmt + '} ({avg' + self.fmt + '})'
+        return fmtstr.format(**self.__dict__)
 
 
 def average_precision(output, target):
