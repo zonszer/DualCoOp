@@ -7,7 +7,7 @@ from utils.helper import AverageMeter, mAP
 from utils.validations import validate, validate_zsl
 from utils.asymmetric_loss import AsymmetricLoss, AsymmetricLoss2, AsymmetricLoss3, PLL_loss
 from torch.cuda.amp import autocast
-
+from copy import deepcopy
 
 def train_classic_fc(data_loader, val_loader, model, optim, sched, scaler, args, cfg, epoch):
     batch_time = AverageMeter()
@@ -99,8 +99,11 @@ def train_coop(data_loader, val_loaders, model, optim, sched, args, cfg, epoch, 
 
         if cfg.TRAINER.FINETUNE_BACKBONE:
             model.module.image_encoder.train()
-
-    criterion = PLL_loss(type=cfg.MLCCLIP.LOSS_TYPE)
+    if torch.cuda.is_available():
+        device = torch.device("cuda")
+    else:
+        device = torch.device("cpu")
+    criterion = PLL_loss(type=cfg.MLCCLIP.LOSS_TYPE, PartialY=deepcopy(data_loader.dataset.targets), device=device)
     # criterion = torch.nn.CrossEntropyLoss()
     # criterion = AsymmetricLoss(cfg.TRAINER.COOP_MLC.ASL_GAMMA_NEG, cfg.TRAINER.COOP_MLC.ASL_GAMMA_POS)
     # criterion2 = AsymmetricLoss2(cfg.TRAINER.COOP_MLC.ASL_GAMMA_NEG, cfg.TRAINER.COOP_MLC.ASL_GAMMA_POS)
@@ -108,10 +111,6 @@ def train_coop(data_loader, val_loaders, model, optim, sched, args, cfg, epoch, 
 
     end = time.time()
     for i,   (images, target, idx) in enumerate(data_loader):
-        if torch.cuda.is_available():
-            device = torch.device("cuda")
-        else:
-            device = torch.device("cpu")
         images = images.to(device)
         target = target.to(device)      #target is (batch_size, num_classes) which contains -1 0 1 vectors
         if cls_id is not None:
@@ -125,14 +124,14 @@ def train_coop(data_loader, val_loaders, model, optim, sched, args, cfg, epoch, 
 
         # compute output
         with autocast():    # The autocast() context manager is used to automatically cast the input data to the appropriate data type for the model.  can be either torch.float16 or torch.float32 depending on the hardware and software configuration.
-            output = model(images, batch_cls_id_input)
+            output = model(images, batch_cls_id_input, idx)
         # loss = args.loss_w * criterion(output, target)
         if cls_id is not None:
             # output = output[:, :, cls_id['train']]
             # target = target[:, cls_id['train']]
             target = target[:, batch_cls_id_input]
         if args.loss_type == 'cc':
-            loss = args.loss_w * criterion(output[:, 1, :], target)  #target.shape=torch.Size([32, 20])
+            loss = args.loss_w * criterion(output[:, 1, :], target, idx)  #target.shape=torch.Size([32, 20])
             # loss = args.loss_w * criterion(output[:, 1, :], torch.argmax(target, dim=1))  #target.shape=torch.Size([32, 20])
         elif args.single_prompt == 'pos':
             loss = args.loss_w * criterion2(output, target)

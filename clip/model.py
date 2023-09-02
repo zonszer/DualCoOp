@@ -150,7 +150,7 @@ class ModifiedResNet(nn.Module):
     - The final pooling layer is a QKV attention instead of an average pool
     """
 
-    def __init__(self, layers, output_dim, heads, input_resolution=224, width=64):
+    def __init__(self, layers, output_dim, heads, input_resolution=224, width=64, is_frozen=True):
         super().__init__()
         self.output_dim = output_dim
         self.input_resolution = input_resolution
@@ -175,6 +175,8 @@ class ModifiedResNet(nn.Module):
         self.embed_dim = width * 32  # the ResNet feature dimension
         self.final_pool = torch.nn.AdaptiveAvgPool2d(7)             #difference0: bef atten use pool or not
         self.attnpool = AttentionPool2d(input_resolution // 32, self.embed_dim, heads, output_dim)
+        if is_frozen:
+            self.stored_outputs = 'need_init'
 
     def _make_layer(self, planes, blocks, stride=1):
         layers = [Bottleneck(self._inplanes, planes, stride)]

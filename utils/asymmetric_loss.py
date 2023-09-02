@@ -3,35 +3,60 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class PLL_loss(nn.Module):
-    def __init__(self, type=None, gamma_neg=4, gamma_pos=1, clip=0.05, eps=1e-6, disable_torch_grad_focal_loss=True):
+    def __init__(self, type=None, PartialY=None, device='cuda',
+                 gamma_neg=4, gamma_pos=1, clip=0.05, eps=1e-6, disable_torch_grad_focal_loss=True):
         super(PLL_loss, self).__init__()
-
         self.gamma_neg = gamma_neg
         self.gamma_pos = gamma_pos
         self.clip = clip
         self.disable_torch_grad_focal_loss = disable_torch_grad_focal_loss
         self.eps = eps
-        self.type = type
+        self.losstype = type
+        self.device = device
         self.softmax = nn.Softmax(dim=1)
+        #PLL items: 
+        if type == 'rc':
+            self.confidence = self.init_confidence(PartialY)
 
-    def forward(self, x, y):
+    def init_confidence(self, PartialY):
+        tempY = PartialY.sum(dim=1, keepdim=True).repeat(1, PartialY.shape[1])   #repeat train_givenY.shape[1] times in dim 1
+        confidence = PartialY.float()/tempY
+        confidence = confidence.to(self.device)
+        return confidence
+    
+    def forward(self, *args):
         """"
-        Parameters
-        ----------
-        x: input logits
+        x: outputs logits
         y: targets (multi-label binarized vector)
         """
         if self.type == 'cc':
-            loss = self.forward_cc(x, y)
+            loss = self.forward_cc(args)
+        elif self.type == 'rc':
+            loss = self.forward_rc(args)
         else:
             raise ValueError
         return loss
 
-    def forward_cc(self, x, y):
+    def forward_cc(self, x, y, index):
         sm_outputs = F.softmax(x, dim=1)      #outputs are logits
         final_outputs = sm_outputs * y
         average_loss = - torch.log(final_outputs.sum(dim=1)).mean()     
         return average_loss
+    
+    def forward_rc(self, x, y, index):
+        logsm_outputs = F.log_softmax(x, dim=1)         #x is the model ouputs
+        final_outputs = logsm_outputs * self.confidence[index, :]
+        average_loss = - ((final_outputs).sum(dim=1)).mean()    #final_outputs=torch.Size([256, 10]) -> Q: why use negative? A:  
+        self.confidence_update(self.confidence, x, y, index)
+        return average_loss     #确实相当于CE loss的自实现版
+
+    def confidence_update(self, confidence, batch_outputs, batchY, batch_index):
+        with torch.no_grad():
+            temp_un_conf = F.softmax(batch_outputs, dim=1)
+            confidence[batch_index, :] = temp_un_conf * batchY # un_confidence stores the weight of each example
+            #weight[batch_index] = 1.0/confidence[batch_index, :].sum(dim=1)
+            base_value = confidence.sum(dim=1).unsqueeze(1).repeat(1, confidence.shape[1])
+            self.confidence = confidence/base_value  # use maticx for element-wise division
     
     def forward_old(self, x, y):
         # Calculating Probabilities

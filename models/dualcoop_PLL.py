@@ -218,7 +218,9 @@ class DualCoop(nn.Module):
         self.dtype = clip_model.dtype
         self.cfg = cfg
 
-    def forward(self, image, cls_id=None):
+    def forward(self, image, cls_id=None, img_idx=None):
+        if hasarrt(self.image_encoder, stored_outputs) and self.image_encoder.stored_outputs == 'need_init':
+            
         image_features = self.image_encoder(image.type(self.dtype))
 
         prompts, tokenized_prompts = self.prompt_learner(cls_id)
