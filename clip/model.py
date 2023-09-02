@@ -150,7 +150,8 @@ class ModifiedResNet(nn.Module):
     - The final pooling layer is a QKV attention instead of an average pool
     """
 
-    def __init__(self, layers, output_dim, heads, input_resolution=224, width=64, is_frozen=True):
+    def __init__(self, layers, output_dim, heads, input_resolution=224, width=64, 
+                 is_frozen=True, train_data_len=None, test_data_len=None):
         super().__init__()
         self.output_dim = output_dim
         self.input_resolution = input_resolution
@@ -175,8 +176,9 @@ class ModifiedResNet(nn.Module):
         self.embed_dim = width * 32  # the ResNet feature dimension
         self.final_pool = torch.nn.AdaptiveAvgPool2d(7)             #difference0: bef atten use pool or not
         self.attnpool = AttentionPool2d(input_resolution // 32, self.embed_dim, heads, output_dim)
-        if is_frozen:
-            self.stored_outputs = 'need_init'
+        if is_frozen and train_data_len is not None and test_data_len is not None:
+            pass
+            # self.stored_outputs = torch.zeros(train_data_len + test_data_len, self.output_dim).cuda()
 
     def _make_layer(self, planes, blocks, stride=1):
         layers = [Bottleneck(self._inplanes, planes, stride)]
@@ -366,7 +368,9 @@ class CLIP(nn.Module):
                  vocab_size: int,
                  transformer_width: int,
                  transformer_heads: int,
-                 transformer_layers: int
+                 transformer_layers: int,
+                 train_data_len,
+                 test_data_len,
                  ):
         super().__init__()
 
@@ -379,7 +383,9 @@ class CLIP(nn.Module):
                 output_dim=embed_dim,
                 heads=vision_heads,
                 input_resolution=image_resolution,
-                width=vision_width
+                width=vision_width,
+                train_data_len=train_data_len,
+                test_data_len=test_data_len,
             )
         else:
             vision_heads = vision_width // 64
@@ -643,7 +649,7 @@ def convert_weights(model: nn.Module):
     model.apply(_convert_weights_to_fp16)
 
 
-def build_model(state_dict: dict, input_size):
+def build_model(state_dict: dict, input_size, cfg):
     vit = "visual.proj" in state_dict
 
     if vit:
@@ -671,7 +677,8 @@ def build_model(state_dict: dict, input_size):
     model = CLIP(
         embed_dim,
         image_resolution, vision_layers, vision_width, vision_patch_size,
-        context_length, vocab_size, transformer_width, transformer_heads, transformer_layers
+        context_length, vocab_size, transformer_width, transformer_heads, transformer_layers,
+        train_data_len=cfg.TRAIN_X_LEN, test_data_len=cfg.TRAIN_Y_LEN,
     )
 
     for key in ["input_resolution", "context_length", "vocab_size"]:

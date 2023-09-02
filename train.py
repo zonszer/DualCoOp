@@ -16,6 +16,15 @@ from utils.helper import save_checkpoint
 from utils_temp.utils_ import *
 
 
+def add_datainfo_to_cfg(cfg, train_dataset, test_dataset):
+    cfg.DATASET.NUM_CLASSES = train_dataset.num_classes
+    cfg.DATASET.TRAIN_X_LEN = len(train_dataset)
+    cfg.DATASET.TEST_X_LEN = len(test_dataset)
+    cfg.DATASET.TRAIN_X_CLASSES = train_dataset.classes
+    cfg.DATASET.TEST_X_CLASSES = test_dataset.classes
+    # cfg.DATASET.TRAIN_X_ROOT = train_dataset.data_dir
+    # cfg.DATASET.TEST_X_ROOT = test_dataset.data_dir
+
 def main():
     global args
     parser = arg_parser()
@@ -26,6 +35,7 @@ def main():
     train_loader = build_PLL_dataloaders(cfg, 'train')
     test_loader = build_PLL_dataloaders(cfg, 'test')
     
+    add_datainfo_to_cfg(cfg, train_loader.dataset, test_loader.dataset)
     # build the model
     model, arch_name = build_model(cfg, args, train_loader.dataset.classes)
     # build the optimizer and lr_scheduler
