@@ -48,6 +48,7 @@ def get_PLL_datasets(cfg, data_split):
                                          data_split=data_split,
                                          transform_mean=cfg.INPUT.PIXEL_MEAN,
                                          transform_std=cfg.INPUT.PIXEL_STD,
+                                         input_size=cfg.INPUT.SIZE[0],
                                          pp=cfg.DATALOADER.TRAIN_X.PARTIAL_PORTION)
 
 

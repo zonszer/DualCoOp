@@ -6,18 +6,21 @@ from PIL import Image
 import torch.nn.functional as F
 
 class CIFAR10(dsets.CIFAR10):
-    def __init__(self, root, data_split, transform_mean, transform_std, img_size=32, pp=1, annFile="", label_mask=None, partial=1+1e-6):
+    def __init__(self, root, data_split, transform_mean, transform_std, 
+                 input_size=None, pp=1, annFile="", label_mask=None, partial=1+1e-6):
         self.root = root
         self.data_split = data_split
-        train_transform = transforms.Compose(
-            [transforms.ToTensor(), 
+        train_transform = transforms.Compose([
+            transforms.Resize(input_size, interpolation=Image.BICUBIC),
+            transforms.ToTensor(), 
             transforms.RandomHorizontalFlip(), 
-            transforms.RandomCrop(32,4),
+            # transforms.RandomCrop(32,4),                      #HACK: can be modified
             transforms.Normalize(transform_mean, transform_std)])
-        test_transform = transforms.Compose(
-            [transforms.ToTensor(),
+        test_transform = transforms.Compose([
+            transforms.Resize(input_size, interpolation=Image.BICUBIC),
+            transforms.ToTensor(),
             transforms.Normalize(transform_mean, transform_std)])
-        # self.classes = ["airplanes", "cars", "birds", "cats", "deer", "dogs", "frogs", "horses", "ships", "trucks"]   #TODO if the "s" is important
+        # self.classes = ["airplanes", "cars", "birds", "cats", "deer", "dogs", "frogs", "horses", "ships", "trucks"]  
         # CIFAR10 has attr self.classes
 
         if self.data_split == 'train':

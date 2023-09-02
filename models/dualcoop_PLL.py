@@ -23,7 +23,7 @@ def load_clip_to_cpu(cfg):
 
     except RuntimeError:
         state_dict = torch.load(model_path, map_location="cpu")
-    model = clip.build_model(state_dict or model.state_dict()) 
+    model = clip.build_model(state_dict or model.state_dict(), input_size=cfg.INPUT.SIZE[0]) 
 
     return model
 

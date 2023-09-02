@@ -14,10 +14,11 @@ def arg_parser():
 
     # data-related
     parser.add_argument('--datadir', type=str,  metavar='DIR', help='path to dataset file list')
-    parser.add_argument('--input_size', default=224, type=int, metavar='N', help='input image size')
-    parser.add_argument('--train_input_size', type=int, metavar='N', help='input image size')
+    parser.add_argument('--input_size', default=None, type=int, metavar='N', help='input image size(if is none(not Explicitly specified) then it will be aggigned to cfg values)')
+    parser.add_argument('--train_input_size', default=None, type=int, metavar='N', help='input image size')
+    parser.add_argument('--test_input_size', default=None, type=int, metavar='N', help='input image size(if is none(not Explicitly specified) then it will be aggigned to cfg values)')
+
     parser.add_argument('--num_train_cls', type=int, default=100, help='input image size')
-    parser.add_argument('--test_input_size', type=int, metavar='N', help='input image size')
     parser.add_argument('--thre', default=0.5, type=float,
                         metavar='N', help='threshold value')
     parser.add_argument('--single_prompt', default='pos', type=str, help='type of single prompt')
