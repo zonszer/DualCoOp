@@ -177,8 +177,7 @@ class ModifiedResNet(nn.Module):
         self.final_pool = torch.nn.AdaptiveAvgPool2d(7)             #difference0: bef atten use pool or not
         self.attnpool = AttentionPool2d(input_resolution // 32, self.embed_dim, heads, output_dim)
         if is_frozen and train_data_len is not None and test_data_len is not None:
-            pass
-            # self.stored_outputs = torch.zeros(train_data_len + test_data_len, self.output_dim).cuda()
+            self.stored_outputs = torch.zeros(train_data_len + test_data_len, self.output_dim, dtype=torch.float16).cuda()
 
     def _make_layer(self, planes, blocks, stride=1):
         layers = [Bottleneck(self._inplanes, planes, stride)]

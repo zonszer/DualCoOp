@@ -218,15 +218,18 @@ class DualCoop(nn.Module):
         self.dtype = clip_model.dtype
         self.cfg = cfg
 
-    def acquire_outputs_from_stored():
-        
-
-    def forward(self, image, cls_id=None, img_idx=None):
+    def acquire_outputs(self, image, cls_id=None, img_idx=None):
         if hasattr(self.image_encoder, 'outputs_stored'):
             acquired_idx = torch.nonzero(self.image_encoder.outputs_stored[img_idx])
-            image[~acquired_idx]
-            acquired_idx = torch.nonzero(self.image_encoder.outputs_stored[img_idx])
-        image_features = self.image_encoder(image.type(self.dtype))
+            if image[~acquired_idx] is not None:
+                image_features_ = self.image_encoder(image[~acquired_idx].type(self.dtype))
+            image_features = torch.cat((self.image_encoder.outputs[img_idx][acquired_idx], image_features_), dim=0)
+        else:
+            image_features = self.image_encoder(image.type(self.dtype))
+        return image_features
+
+    def forward(self, image, cls_id=None, img_idx=None):
+        image_features = self.acquire_outputs(image, cls_id, img_idx)
         prompts, tokenized_prompts = self.prompt_learner(cls_id)
         text_features = self.text_encoder(prompts, tokenized_prompts)
 

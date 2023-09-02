@@ -66,7 +66,7 @@ def train_classic_fc(data_loader, val_loader, model, optim, sched, scaler, args,
                 losses=losses, mAP_batches=mAP_batches), flush=True)
 
         if args.val_freq_in_epoch != -1 and (i + 1) % args.val_freq_in_epoch == 0:
-            p_c, r_c, f_c, p_o, r_o, f_o, mAP_score = validate(val_loader, model, args)
+            p_c, r_c, f_c, p_o, r_o, f_o, mAP_score = validate(val_loader, model, args, lenof_trainset=cfg.DATASET.TRAIN_X_LEN)
             print('Test: [{}/{}]\t '
                   ' P_C {:.2f} \t R_C {:.2f} \t F_C {:.2f} \t P_O {:.2f} \t R_O {:.2f} \t F_O {:.2f} \t mAP {:.2f}'
                   .format(epoch + 1, cfg.OPTIM.MAX_EPOCH, p_c, r_c, f_c, p_o, r_o, f_o, mAP_score), flush=True)
@@ -164,7 +164,7 @@ def train_coop(data_loader, val_loaders, model, optim, sched, args, cfg, epoch, 
 
         if args.val_freq_in_epoch != -1 and (i + 1) % args.val_freq_in_epoch == 0:
             if len(val_loaders) == 1:
-                acc1, acc5 = validate(val_loaders[0], model, args)
+                acc1, acc5 = validate(val_loaders[0], model, args, lenof_trainset=cfg.DATASET.TRAIN_X_LEN)
                 print('Test: [{}/{}]\t '
                       '  acc1 {:.2f} \t acc5 {:.2f}'
                       .format(epoch + 1, cfg.OPTIM.MAX_EPOCH, acc1, acc5), flush=True)

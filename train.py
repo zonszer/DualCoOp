@@ -132,7 +132,7 @@ def main():
             losses=losses, mAP_batches=mAP_batches), file=logfile, flush=True)
 
         if (epoch + 1) % args.val_every_n_epochs == 0 or epoch == args.stop_epochs - 1:
-            acc1, acc5 = validate(test_loader, model, args)
+            acc1, acc5 = validate(test_loader, model, args, lenof_trainset=cfg.DATASET.TRAIN_X_LEN)
             print('Test: [{}/{}]\t '
                     '  acc1 {:.2f} \t acc5 {:.2f}'
                     .format(epoch + 1, cfg.OPTIM.MAX_EPOCH, acc1, acc5), flush=True)

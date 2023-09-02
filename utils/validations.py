@@ -21,7 +21,7 @@ def accuracy(output, target, topk=(1,)):
             res.append(correct_k.mul_(100.0 / batch_size))
         return res
 
-def validate(data_loader, model, args):
+def validate(data_loader, model, args, lenof_trainset=None):
     with torch.no_grad():
         print('==> Evaluation...')       
         model.eval()    
@@ -30,6 +30,7 @@ def validate(data_loader, model, args):
 
         end = time.time()
         for i,   (images, target, idx) in enumerate(data_loader):
+            idx = idx + lenof_trainset if lenof_trainset else None          #NOTE: this is for correct idx in self.output_stored[idx] 
             if torch.cuda.is_available():
                 device = torch.device("cuda")
             else:
@@ -38,7 +39,7 @@ def validate(data_loader, model, args):
 
             # compute output
             with autocast():
-                output = model(images)
+                output = model(images, img_idx=idx)
             if output.dim() == 3:
                 output = output.cpu()[:, 1]
             acc1, acc5 = accuracy(output, target, topk=(1, 5))
