@@ -9761,3 +9761,23 @@ Train: [44/50]	Time 0.877	Loss 2.11 	mAP 82.68
 Train: [40/50]	Time 0.880	Loss 0.62 	mAP 68.16
 Test: [44/50]	   acc1 83.47 	 acc5 99.11
 Test: [40/50]	   acc1 78.51 	 acc5 98.34
+Train: [45/50]	Time 0.904	Loss 2.11 	mAP 82.59
+Train: [41/50]	Time 0.908	Loss 0.62 	mAP 68.17
+Test: [45/50]	   acc1 83.07 	 acc5 99.23
+Test: [41/50]	   acc1 79.27 	 acc5 98.38
+Train: [46/50]	Time 0.892	Loss 2.11 	mAP 82.55
+Train: [42/50]	Time 0.893	Loss 0.62 	mAP 68.16
+Test: [46/50]	   acc1 83.50 	 acc5 99.24
+Test: [42/50]	   acc1 78.58 	 acc5 98.39
+Train: [47/50]	Time 0.899	Loss 2.11 	mAP 82.60
+Train: [43/50]	Time 0.902	Loss 0.62 	mAP 68.16
+Test: [47/50]	   acc1 83.40 	 acc5 99.26
+Test: [43/50]	   acc1 79.76 	 acc5 98.40
+Train: [48/50]	Time 0.894	Loss 2.11 	mAP 82.50
+Train: [44/50]	Time 0.896	Loss 0.62 	mAP 68.18
+Test: [48/50]	   acc1 83.57 	 acc5 99.24
+Test: [44/50]	   acc1 78.81 	 acc5 98.19
+Train: [49/50]	Time 0.904	Loss 2.11 	mAP 82.64
+Train: [45/50]	Time 0.904	Loss 0.62 	mAP 68.13
+Test: [49/50]	   acc1 83.68 	 acc5 99.24
+Test: [45/50]	   acc1 79.35 	 acc5 98.54

@@ -219,7 +219,6 @@ class DualCoop(nn.Module):
         self.cfg = cfg
 
     def forward(self, image, cls_id=None, img_idx=None):
-        if hasarrt(self.image_encoder, stored_outputs) and self.image_encoder.stored_outputs == 'need_init':
             
         image_features = self.image_encoder(image.type(self.dtype))
 

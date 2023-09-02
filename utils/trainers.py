@@ -103,8 +103,8 @@ def train_coop(data_loader, val_loaders, model, optim, sched, args, cfg, epoch, 
         device = torch.device("cuda")
     else:
         device = torch.device("cpu")
-    criterion = PLL_loss(type=cfg.MLCCLIP.LOSS_TYPE, PartialY=deepcopy(data_loader.dataset.targets), device=device)
-    # criterion = torch.nn.CrossEntropyLoss()
+    # criterion = PLL_loss(type=cfg.MLCCLIP.LOSS_TYPE, PartialY=deepcopy(data_loader.dataset.targets), device=device)
+    criterion = torch.nn.CrossEntropyLoss()
     # criterion = AsymmetricLoss(cfg.TRAINER.COOP_MLC.ASL_GAMMA_NEG, cfg.TRAINER.COOP_MLC.ASL_GAMMA_POS)
     # criterion2 = AsymmetricLoss2(cfg.TRAINER.COOP_MLC.ASL_GAMMA_NEG, cfg.TRAINER.COOP_MLC.ASL_GAMMA_POS)
     # criterion3 = AsymmetricLoss3(cfg.TRAINER.COOP_MLC.ASL_GAMMA_NEG, cfg.TRAINER.COOP_MLC.ASL_GAMMA_POS)
