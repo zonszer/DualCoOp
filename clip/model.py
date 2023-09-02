@@ -678,7 +678,7 @@ def build_model(state_dict: dict, input_size, cfg):
         embed_dim,
         image_resolution, vision_layers, vision_width, vision_patch_size,
         context_length, vocab_size, transformer_width, transformer_heads, transformer_layers,
-        train_data_len=cfg.TRAIN_X_LEN, test_data_len=cfg.TRAIN_Y_LEN,
+        train_data_len=cfg.TRAIN_X_LEN, test_data_len=cfg.TEST_X_LEN,
     )
 
     for key in ["input_resolution", "context_length", "vocab_size"]:

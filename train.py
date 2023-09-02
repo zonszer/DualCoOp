@@ -17,7 +17,6 @@ from utils_temp.utils_ import *
 
 
 def add_datainfo_to_cfg(cfg, train_dataset, test_dataset):
-    cfg.DATASET.NUM_CLASSES = train_dataset.num_classes
     cfg.DATASET.TRAIN_X_LEN = len(train_dataset)
     cfg.DATASET.TEST_X_LEN = len(test_dataset)
     cfg.DATASET.TRAIN_X_CLASSES = train_dataset.classes
