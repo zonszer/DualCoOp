@@ -4,7 +4,7 @@ import torch
 from .helper import generate_uniform_cv_candidate_labels
 from PIL import Image
 import torch.nn.functional as F
-
+import torch.utils.data
 class CIFAR10(dsets.CIFAR10):
     def __init__(self, root, data_split, transform_mean, transform_std, 
                  input_size=None, pp=1, annFile="", label_mask=None, partial=1+1e-6):
@@ -38,9 +38,8 @@ class CIFAR10(dsets.CIFAR10):
         #     self.targets = F.one_hot(torch.tensor(self.targets), num_classes=len(self.classes)).float()
 
 
-
-    def build_dataloader(self, batch_size, shuffle, num_workers=15):
-        loader = torch.utils.data.DataLoader(dataset=self, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers)
+    def build_dataloader(self, batch_size, shuffle, num_workers=18):
+        loader = torch.utils.data.DataLoader(dataset=self, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers, pin_memory=True)
         return loader
                                              
 

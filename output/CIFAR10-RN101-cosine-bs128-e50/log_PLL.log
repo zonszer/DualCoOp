@@ -9794,3 +9794,8 @@ Train: [48/50]	Time 0.566	Loss 0.62 	mAP 68.16
 Test: [48/50]	   acc1 79.79 	 acc5 98.50
 Train: [49/50]	Time 0.563	Loss 0.62 	mAP 68.17
 Test: [49/50]	   acc1 79.87 	 acc5 98.53
+Train: [50/50]	Time 0.779	Loss 0.62 	mAP 68.16
+Test: [50/50]	   acc1 79.48 	 acc5 98.39
+Evaluating the best model
+Evaluate with threshold 0.50
+... loading pretrained weights from ./output/CIFAR10-RN101-cosine-bs128-e50/model_best.pth.tar

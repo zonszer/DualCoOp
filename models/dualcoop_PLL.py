@@ -218,12 +218,44 @@ class DualCoop(nn.Module):
         self.dtype = clip_model.dtype
         self.cfg = cfg
 
-    def acquire_outputs(self, image, cls_id=None, img_idx=None):
-        if hasattr(self.image_encoder, 'outputs_stored'):
-            acquired_idx = torch.nonzero(self.image_encoder.outputs_stored[img_idx])
-            if image[~acquired_idx] is not None:
+    def acquire_outputs_(self, image, cls_id=None, img_idx=None):
+        if hasattr(self.image_encoder, 'stored_outputs'):
+            acquired_idx = torch.all(self.image_encoder.stored_outputs[img_idx]!=0., dim=1)
+            assert image[~acquired_idx].shape[0] == 0 or image[acquired_idx].shape[0] == image.shape[0]    
+
+            stored_indices = torch.where(acquired_idx)[0] # Indices of stored image features
+            new_indices = torch.where(~acquired_idx)[0] # Indices of new image features to compute
+
+            image_features_ = torch.empty(0)
+            if image[~acquired_idx].shape[0] > 0:
                 image_features_ = self.image_encoder(image[~acquired_idx].type(self.dtype))
-            image_features = torch.cat((self.image_encoder.outputs[img_idx][acquired_idx], image_features_), dim=0)
+            
+            # Combine all image features
+            all_features = torch.cat((self.image_encoder.stored_outputs[img_idx][acquired_idx], image_features_), dim=0)
+
+            # Combine all indices and then sort them ( Maintain the order )
+            all_indices = torch.cat((stored_indices, new_indices), dim=0)
+            sorted_indices = torch.argsort(all_indices)
+
+            # Reordering all image features by original order
+            image_features = all_features[sorted_indices]
+        
+        else:
+            image_features = self.image_encoder(image.type(self.dtype))
+        return image_features
+
+    def acquire_outputs(self, image, cls_id=None, img_idx=None):
+        if hasattr(self.image_encoder, 'stored_outputs'):
+            acquired_idx = self.image_encoder.stored_outputs_idx[img_idx]
+            # acquired_idx = torch.all(self.image_encoder.stored_outputs[img_idx] != 0., dim=1)       #HACK TO be org
+            assert image[~acquired_idx].shape[0]==0 or image[~acquired_idx].shape[0]==image.shape[0], f"image[~acquired_idx].shape is {image[~acquired_idx].shape}"                #HACK simplify the problem and assert training in epochs
+            image_features_ = torch.empty(0).cuda()
+            if image[~acquired_idx].shape[0] > 0:
+                image_features_ = self.image_encoder(image[~acquired_idx].type(self.dtype))
+            image_features = torch.cat((self.image_encoder.stored_outputs[img_idx][acquired_idx], image_features_), dim=0)
+            # update stored tensors:
+            self.image_encoder.stored_outputs[img_idx] = image_features     
+            self.image_encoder.stored_outputs_idx[img_idx[~acquired_idx]] = True
         else:
             image_features = self.image_encoder(image.type(self.dtype))
         return image_features

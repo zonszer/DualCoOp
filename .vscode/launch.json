@@ -5,7 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "train.py-CIFAR10",
+            "name": "train-cc.py-CIFAR10",
             "type": "python",
             "request": "launch",
             "program": "train.py",
@@ -25,6 +25,27 @@
               "--csc",
               "--loss_type=cc",
             ]
+        },
+
+        {
+          "name": "train-rc.py-CIFAR10",
+          "type": "python",
+          "request": "launch",
+          "program": "train.py",
+          "console": "integratedTerminal",
+          "justMyCode": false,
+          "env": {
+            "CUDA_VISIBLE_DEVICES": "0,"
+          },
+          "args": [
+            "--config_file=configs/models/rn101_ep15.yaml",
+            "--dataset_config_file=configs/datasets/CIFAR10.yaml",
+            "--lr=0.002",
+            "--loss_w=1",
+            "-pp=0.5",
+            "--csc",
+            "--loss_type=rc",
+          ]
         },
 
         {

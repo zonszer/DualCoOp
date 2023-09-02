@@ -130,7 +130,7 @@ def train_coop(data_loader, val_loaders, model, optim, sched, args, cfg, epoch, 
             # output = output[:, :, cls_id['train']]
             # target = target[:, cls_id['train']]
             target = target[:, batch_cls_id_input]
-        if args.loss_type == 'cc':
+        if output.dim() == 3 :
             loss = args.loss_w * criterion(output[:, 1, :], target, idx)  #target.shape=torch.Size([32, 20])
             # loss = args.loss_w * criterion(output[:, 1, :], torch.argmax(target, dim=1))  #target.shape=torch.Size([32, 20])
         elif args.single_prompt == 'pos':
