@@ -5,7 +5,7 @@ def cc_loss(outputs, partialY):
     # method 1：
     sm_outputs = F.softmax(outputs, dim=1)      #outputs are logits
     final_outputs = sm_outputs * partialY
-    average_loss = - torch.log(final_outputs.sum(dim=1)).mean()     #cc不就是普通的CE loss吗
+    average_loss = - torch.log(final_outputs.sum(dim=1)).mean()     
     # method 2：
     # sm_outputs = F.log_softmax(outputs, dim=1)
     # final_outputs = sm_outputs * partialY

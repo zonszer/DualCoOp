@@ -666,7 +666,7 @@ def build_model(state_dict: dict, input_size, cfg):
         output_width = round((state_dict["visual.attnpool.positional_embedding"].shape[0] - 1) ** 0.5)
         vision_patch_size = None
         assert output_width ** 2 + 1 == state_dict["visual.attnpool.positional_embedding"].shape[0]
-        image_resolution = output_width * 32    ## what is image_resolution and why use it? TODO
+        image_resolution = output_width * 32    ## what is image_resolution and why use it? 
 
     embed_dim = state_dict["text_projection"].shape[1]
     context_length = state_dict["positional_embedding"].shape[0]
@@ -727,7 +727,7 @@ def build_model_conv_proj(state_dict: dict, cfg):
             del state_dict[key]
 
     convert_weights(model)
-    #------------------ difference: here TODO 
+    #------------------ difference: here 
     old_state_dict = model.state_dict()
     for k, v in old_state_dict.items():
         if k in state_dict.keys():

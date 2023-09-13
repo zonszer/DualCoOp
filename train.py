@@ -151,7 +151,7 @@ def main():
                          'optimizer': optim.state_dict(),
                          'scheduler': sched.state_dict()
                          }
-            save_checkpoint(save_dict, is_best, log_folder)
+            # save_checkpoint(save_dict, is_best, log_folder)
 
     print('Evaluating the best model', flush=True)
     print('Evaluating the best model', file=logfile, flush=True)

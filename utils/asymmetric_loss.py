@@ -2,6 +2,35 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+class GeneralizedCrossEntropy(nn.Module):
+    """Computes the generalized cross-entropy loss, from `
+    "Generalized Cross Entropy Loss for Training Deep Neural Networks with Noisy Labels"
+    <https://arxiv.org/abs/1805.07836>`_
+    Args:
+        q: Box-Cox transformation parameter, :math:`\in (0,1]`
+    Shape:
+        - Input: the raw, unnormalized score for each class.
+                tensor of size :math:`(minibatch, C)`, with C the number of classes
+        - Target: the labels, tensor of size :math:`(minibatch)`, where each value
+                is :math:`0 \leq targets[i] \leq C-1`
+        - Output: scalar
+    """
+
+    def __init__(self, q: float = 0.7) -> None:
+        super().__init__()
+        self.q = q
+        self.epsilon = 1e-6
+        self.softmax = nn.Softmax(dim=1)
+
+    def forward(self, input: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+        p = self.softmax(input)
+        p = p[torch.arange(p.shape[0]), target]
+        # Avoid undefined gradient for p == 0 by adding epsilon
+        p += self.epsilon
+        loss = (1 - p ** self.q) / self.q
+        return torch.mean(loss)
+
+
 class PLL_loss(nn.Module):
     def __init__(self, type=None, PartialY=None, device='cuda',
                  gamma_neg=4, gamma_pos=1, clip=0.05, eps=1e-6, disable_torch_grad_focal_loss=True):
@@ -17,6 +46,8 @@ class PLL_loss(nn.Module):
         #PLL items: 
         if type == 'rc':
             self.confidence = self.init_confidence(PartialY)
+        if type == 'gce':
+            self.q = 0.7
 
     def init_confidence(self, PartialY):
         tempY = PartialY.sum(dim=1, keepdim=True).repeat(1, PartialY.shape[1])   #repeat train_givenY.shape[1] times in dim 1
@@ -29,18 +60,41 @@ class PLL_loss(nn.Module):
         x: outputs logits
         y: targets (multi-label binarized vector)
         """
-        if self.type == 'cc':
-            loss = self.forward_cc(args)
-        elif self.type == 'rc':
-            loss = self.forward_rc(args)
+        if self.losstype == 'cc':
+            loss = self.forward_cc(*args)
+        elif self.losstype == 'ce':
+            loss = self.forward_ce(*args)
+        elif self.losstype == 'gce':
+            loss = self.forward_gce(*args)
+        elif self.losstype == 'rc':
+            loss = self.forward_rc(*args)
         else:
             raise ValueError
         return loss
 
+    def forward_gce(self, x, y, index):
+        """y is shape of (batch_size, num_classes)"""
+        p = F.softmax(x, dim=1)      #outputs are logits
+        # Create a tensor filled with a very small number to represent 'masked' positions
+        masked_p = p.new_full(p.size(), float('-inf'))
+        # Apply the mask
+        masked_p[y.bool()] = p[y.bool()]
+        # Adjust masked positions to avoid undefined gradients by adding epsilon
+        masked_p[masked_p == float('-inf')] = self.eps
+        loss = (1 - masked_p ** self.q) / self.q
+        loss = (loss.sum(dim=1) / y.sum(dim=1)).mean()
+        return loss
+    
     def forward_cc(self, x, y, index):
         sm_outputs = F.softmax(x, dim=1)      #outputs are logits
         final_outputs = sm_outputs * y
-        average_loss = - torch.log(final_outputs.sum(dim=1)).mean()     
+        average_loss = - torch.log(final_outputs.sum(dim=1) / y.sum(dim=1)).mean()     #NOTE: add y.sum(dim=1)
+        return average_loss
+    
+    def forward_ce(self, x, y, index):
+        sm_outputs = F.log_softmax(x, dim=1)
+        final_outputs = sm_outputs * y
+        average_loss = - (final_outputs.sum(dim=1) / y.sum(dim=1)).mean()  #NOTE: add y.sum(dim=1)
         return average_loss
     
     def forward_rc(self, x, y, index):
@@ -48,7 +102,7 @@ class PLL_loss(nn.Module):
         final_outputs = logsm_outputs * self.confidence[index, :]
         average_loss = - ((final_outputs).sum(dim=1)).mean()    #final_outputs=torch.Size([256, 10]) -> Q: why use negative? A:  
         self.confidence_update(self.confidence, x, y, index)
-        return average_loss     #确实相当于CE loss的自实现版
+        return average_loss     
 
     def confidence_update(self, confidence, batch_outputs, batchY, batch_index):
         with torch.no_grad():
